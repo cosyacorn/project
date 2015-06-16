@@ -1,0 +1,44 @@
+\documentclass[pdf]{beamer}
+\mode<presentation>{}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+
+\usetheme{Warsaw}
+\usecolortheme{dolphin}
+
+\title{Spin models on random bipartite graphs}
+\author{Shane Harding \\ Supervisor: Mike Peardon}
+
+\begin{document}
+
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+\begin{frame}
+\frametitle{Project description}
+In this project I will develop MPI software to run an Ising model simulation on a random bipartite graph.
+\begin{itemize}
+\item A bipartite graph is one where the vertices can be divided into two disjoint sets, $A$ and $B$, such that every edge connects a vertex in $A$ to one in $B$.
+\item Then each vertext is given a spin, up or down. And the spins interact only with the others that it's connected to by an edge.
+\item An investigation of the best way to partition a random graph into sub-domains to be handled on MPI cores will be carried out. 
+\item The phase structure of these spin models will be studied in detail. The physical meaning will be analysed.
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Outline of plan}
+\begin{itemize}
+\item Write a general MPI code for the problem.
+\item Specialise the code to look at specific cases. Could be graphs with unique or unusual properties that would make for some interesting parallelisation or physics.
+\item Analyse performance aspects of the code.
+\item Physical meaning of the interactions and the results of the simulations will be studied
+\end{itemize}
+\end{frame}
+
+
+
+\end{document}
