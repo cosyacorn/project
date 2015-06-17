@@ -3,6 +3,7 @@
 #include<time.h>
 #include<math.h>
 
+//function declarations
 void set_spins(int size, int * a_spin, int * b_spin);
 void print_spins(int size, int * a_spin, int * b_spin);
 int hamiltonian_local(int spin, int spin1, int spin2, int spin3);
@@ -14,7 +15,9 @@ int main(int argc, char * argv[]){
 		printf("\n ERROR: correct usage: %s filename\n", argv[0]);
 		return 1;
 	}else{
+
 		srand48(time(NULL));
+
 		// READ GRAPH FROM FILE
 		FILE * graph;
 		int ch, i, j, k, num_points, index1, index2, num_iters, act, prod;

@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-Wall -lm
 
 trivalent: main.c
-	$(CC) $(CFLAGS) -o trivalent main.c
+	$(CC) -o trivalent main.c $(CFLAGS)
 
 clean:
 	$(RM) trivalent
