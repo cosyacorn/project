@@ -77,22 +77,22 @@ int main(int argc, char * argv[]){
 
 		int case1, case2;
 		//set third neighbour
-		for(i=0;i<num_nodes;i++){
-			flag=0;
-			count=0;
+		for(i=0;i<num_nodes-3;i++){
+			//flag=0;
+			//count=0;
 			while(flag==0){
 				r=third[index=rand()%num_nodes];
-				count++;
+				//count++;
 				//printf("%d ", r);
 				if(r!=-1 && r!=a[i][0] && r!=a[i][1]){
 					a[i][2]=r;
 					//printf("%d ", r);
 					third[index]=-1;
 					flag=1;
-					if(i==num_nodes-3) temp1=r;
-					if(i==num_nodes-2) temp2=r;
+					//if(i==num_nodes-3) temp1=r;
+					//if(i==num_nodes-2) temp2=r;
 				}
-				if(i==num_nodes-2 && count > 20 && r!=-1){
+				/*if(i==num_nodes-2 && count > 20 && r!=-1){
 					printf("swap0\n");
 					a[i-1][2]=r;
 					a[i][2]=temp1;
@@ -111,9 +111,41 @@ int main(int argc, char * argv[]){
 						a[i][2]=temp2;
 						flag=1;
 					}
-				}
+				}*/
 			}
 		}
+		int num1, num2, num3;
+		count=0;
+		for(i=0;i<num_nodes;i++){
+			if(third[i]!=-1 && count==0){
+				num1=third[i];
+				count++;
+				third[i]=-1;
+			}
+			if(third[i]!=-1 && count==1){
+				num2=third[i];
+				count++;
+				third[i]=-1;
+			}
+			if(third[i]!=-1 && count==2){
+				num3=third[i];
+				count++;
+				third[i]=-1;
+			}
+		}
+		int yes1[3], yes2[3], yes3[3];
+		for(i=num_nodes-3;i<num_nodes;i++){
+			if(num1!=a[i][0] && num1!=a[i][1]){
+				yes1[i-num_nodes+3]=1;
+			} else yes1[i-num_nodes+3]=0;
+			if(num2!=a[i][0] && num2!=a[i][1]){
+				yes2[i-num_nodes+3]=1;
+			} else yes2[i-num_nodes+3]=0;
+			if(num3!=a[i][0] && num3!=a[i][1]){
+				yes3[i-num_nodes+3]=1;
+			} else yes3[i-num_nodes+3]=0;
+		}
+
 		//printf("\n");
 		//print graph
 		for(i=0;i<num_nodes;i++){
