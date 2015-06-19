@@ -10,15 +10,10 @@ int main(int argc, char * argv[]){
 		return 1;
 	}else{
 	
-		int num_nodes, i, j;
+		int num_nodes, i, index;
 		srand(time(NULL));
 
 		num_nodes=atoi(argv[1]);
-		//printf("%d\n", num_nodes);
-		if(num_nodes%2!=0){
-			printf("ERROR! Number of nodes must be even. Exiting.\n");
-			return 1;
-		}
 
 		int ** a = (int **)malloc(sizeof(int *)*num_nodes);
 		int ** b = (int **)malloc(sizeof(int *)*num_nodes);
@@ -35,14 +30,98 @@ int main(int argc, char * argv[]){
 			third[i] = i;
 		}
 
-
+		int r, flag, count, temp1, temp2;
+		
+		//set first neighbour
 		for(i=0;i<num_nodes;i++){
-			a[i][0]=first[rand()%num_nodes];
+			flag=0;
+			count=0;
+			while(flag==0){
+				r=first[index=rand()%num_nodes];
+				if(r!=-1){
+					a[i][0]=r;
+					//printf("%d ", r);
+					first[index]=-1;
+					flag=1;
+					//count++;
+					//if(count==2) break;
+				}
+			}
+		}
+		for(i=0;i<num_nodes;i++) printf("%d", a[i][0]);
+		printf("\n");
+
+		//set second neighbour
+		for(i=0;i<num_nodes;i++){
+			flag=0;
+			count=0;
+			while(flag==0){
+				r=second[index=rand()%num_nodes];
+				if(r!=-1 && r!=a[i][0]){
+					a[i][1]=r;
+					second[index]=-1;
+					flag=1;
+					if(i==num_nodes-2) temp1=r;
+				}
+				//if r equals the last first neighbour entry
+				if(i==(num_nodes-1) && r==a[i][0]){
+					a[i-1][1]=a[i][0];
+					a[i][1]=temp1;
+					flag=1;	
+				}
+			}
+		}
+
+		for(i=0;i<num_nodes;i++) printf("%d", a[i][1]);
+		printf("\n");
+
+		int case1, case2;
+		//set third neighbour
+		for(i=0;i<num_nodes;i++){
+			flag=0;
+			count=0;
+			while(flag==0){
+				r=third[index=rand()%num_nodes];
+				count++;
+				//printf("%d ", r);
+				if(r!=-1 && r!=a[i][0] && r!=a[i][1]){
+					a[i][2]=r;
+					//printf("%d ", r);
+					third[index]=-1;
+					flag=1;
+					if(i==num_nodes-3) temp1=r;
+					if(i==num_nodes-2) temp2=r;
+				}
+				if(i==num_nodes-2 && count > 20 && r!=-1){
+					printf("swap0\n");
+					a[i-1][2]=r;
+					a[i][2]=temp1;
+					temp1=r;
+					flag=1;
+				}
+				if(i==num_nodes-1 && count>20 && r!=-1){
+					if(r!=a[i-2][0] && r!=a[i-2][1]){
+						printf("swap1\n");
+						a[i-2][2]=r;
+						a[i][2]=temp1;
+						flag=1;
+					} else if(r!=a[i-1][0] && r!=a[i-1][1]){
+						printf("swap2\n");
+						a[i-1][2]=r;
+						a[i][2]=temp2;
+						flag=1;
+					}
+				}
+			}
+		}
+		//printf("\n");
+		//print graph
+		for(i=0;i<num_nodes;i++){
+			printf("%d: %d, %d, %d\n", i, a[i][0], a[i][1], a[i][2]);
 		}
 
 
-
-
+		//clean up time
 		for(i=0;i<num_nodes;i++){
 			free(a[i]);
 			free(b[i]);
