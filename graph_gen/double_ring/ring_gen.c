@@ -7,7 +7,10 @@ int main(int argc, char * argv[]){
 	FILE * graph;
 	graph=fopen("double_ring.txt", "w");
 
-	num_nodes=4;
+
+	if(argc==1) num_nodes=4;
+	if(argc==2) num_nodes=atoi(argv[1]);
+	if(argc>2) return 1;
 	fprintf(graph, "%d\n", num_nodes);
 
 	for(k=0;k<2;k++){

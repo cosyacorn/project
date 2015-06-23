@@ -20,17 +20,17 @@ int main(int argc, char * argv[]){
 
 		// READ GRAPH FROM FILE
 		FILE * graph;
-		int ch, i, j, k, num_points, index1, index2, num_iters, act, prod;
+		int  i, j, k, num_points, num_iters, act, prod;
 		double beta, mag;
 
-		beta=0.5;
+		beta=5;
 		num_iters=100;
 
 		graph = fopen(argv[1], "r");
 
-		num_points=fgetc(graph)-48;
-		//ascii code is read in. converted to int by subraacting 48
-		printf("%d\n", num_points);
+		fscanf(graph, "%d\n", &num_points);
+	
+		printf("Points in each set: %d\n", num_points);
 
 		int ** a = (int **)malloc(sizeof(int *)*num_points);
 		int ** b = (int **)malloc(sizeof(int *)*num_points);
@@ -39,29 +39,19 @@ int main(int argc, char * argv[]){
 			a[i] = (int *)malloc(sizeof(int)*3);
 			b[i] = (int *)malloc(sizeof(int)*3);
 		}
-		ch=fgetc(graph); //skip the first '\n' character
-		for(k=0;k<2;k++){
-			for(i=0;i<num_points;i++){
-				j=0;
-				index2=0;
-				do{
-					ch=fgetc(graph);
-					if(ch!=';' && ch!=',' && ch!='\n'){
-						ch=ch-48;
-						if(j==0) index1 = ch;
-		
-						if(j!=0){
-							if(k==0) a[index1][index2] = ch;
-							if (k==1) b[index1][index2] = ch;
-							//printf("%d\n", ch);
-							index2++;
-						}
-						j++;
-					}
-				if(ch==EOF) break;
-				} while(ch!='\n');
-			}
+
+		// read in points from file
+		for(i=0;i<num_points;i++){
+			fscanf(graph, "%d;", &k);
+			fscanf(graph, "%d,%d,%d\n", &a[k][0], &a[k][1], &a[k][2]);
+
 		}
+
+		for(i=0;i<num_points;i++){
+			fscanf(graph, "%d;", &k);
+			fscanf(graph, "%d,%d,%d\n", &b[k][0], &b[k][1], &b[k][2]);
+		}
+
 		fclose(graph);
 		// FINISH READING GRAPH
 
@@ -82,7 +72,7 @@ int main(int argc, char * argv[]){
 
 	
 		set_spins(num_points, a_spin, b_spin);
-		print_spins(num_points, a_spin, b_spin);
+		//print_spins(num_points, a_spin, b_spin);
 
 
 		for(k=0;k<num_iters;k++){
@@ -96,7 +86,7 @@ int main(int argc, char * argv[]){
 				b_spin[i] = update_site(beta, b_spin[i], a_spin[b[i][0]], a_spin[b[i][1]], a_spin[b[i][2]]);
 			}
 			printf("Update %d:\n", k+1);
-			print_spins(num_points, a_spin, b_spin);
+			//print_spins(num_points, a_spin, b_spin);
 			//printf("\n");
 			
 			//calculate the magentisation
