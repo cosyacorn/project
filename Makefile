@@ -1,4 +1,4 @@
-DIRS = proposal report serial_code/trivalent
+DIRS = proposal report serial_code/trivalent graph_gen graph_gen/double_ring
 
 
 all:
