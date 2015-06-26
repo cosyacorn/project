@@ -1,8 +1,8 @@
 CC=gcc
 CFLAGS=-Wall -lm
 
-trivalent: main.c
-	$(CC) -o trivalent main.c $(CFLAGS)
+trivalent: main.c set_spins.c print_spins.c hamiltonian_local.c propose_spin_flip.c
+	$(CC) -o trivalent main.c set_spins.c print_spins.c hamiltonian_local.c propose_spin_flip.c $(CFLAGS)
 
 clean:
 	$(RM) trivalent

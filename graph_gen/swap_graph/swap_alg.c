@@ -3,14 +3,16 @@
 #include<unistd.h>
 #include<getopt.h>
 #include<time.h>
+#include<ctype.h>
 
 void reverse_engineer(int ** in, int ** out, int num_nodes);
 
 int main(int argc, char *argv[]){
 
 	srand(time(NULL));
-	int num_nodes, i, opt, nflag, sflag, index1_1, index1_2, index2_1, index2_2, flag, temp, num_swaps;
-
+	int num_nodes, i, opt, nflag, sflag, index1_1, index1_2, index2_1, index2_2, flag, temp, temp2, num_swaps;
+	double time_taken;
+	clock_t begin, end;
 
 	nflag=0;
 	sflag=0;
@@ -64,6 +66,8 @@ int main(int argc, char *argv[]){
 	// simply give node the corresponding node in the other set
 	// and the next two as neighbours
 
+	begin = clock(); // begin timing
+
 	for(i=0;i<num_nodes;i++){
 		a[i][0]=i;
 		a[i][1]=(i+1)%num_nodes;
@@ -73,9 +77,12 @@ int main(int argc, char *argv[]){
 	// get set b's neighbours
 	reverse_engineer(a, b, num_nodes);
 
+	// print initial config
+	printf("Initial config\nSet A:\n");
 	for(i=0;i<num_nodes;i++) printf("%d: %d %d %d\n", i, a[i][0], a[i][1], a[i][2]);
-	printf("\n");
-	
+
+	printf("Set B:\n");
+	for(i=0;i<num_nodes;i++) printf("%d: %d %d %d\n", i, b[i][0], b[i][1], b[i][2]);
 
 
 	// do required no of swaps
@@ -103,6 +110,13 @@ int main(int argc, char *argv[]){
 				a[index1_1][index1_2]=a[index2_1][index2_2];
 				a[index2_1][index2_2]=temp;
 	
+				for(i=0;i<3;i++){
+					printf("b %d  a %d\n", b[a[index1_1][index1_2]][i], index1_1);
+					if(b[a[index1_1][index1_2]][i]==index1_1) temp2=i;
+					
+				}
+				printf("%d\n", temp2);
+
 				// ensure the swap doesn't break the trivalent-bipartite nature
 				if(a[index1_1][index1_2] == a[index1_1][(index1_2+1)%3] || a[index1_1][index1_2] == a[index1_1][(index1_2+2)%3]){ flag=0;}
 				else if(a[index2_1][index2_2] == a[index2_1][(index2_2+1)%3] || a[index2_1][index2_2] == a[index2_1][(index2_2+2)%3]){ flag=0;}
@@ -117,10 +131,21 @@ int main(int argc, char *argv[]){
 			}
 		}
 	}
+	
+	// end timing
+	end = clock();
+
+	// calculate time
+	time_taken = (double)(end - begin)/CLOCKS_PER_SEC;
 
 	// print final config
+	printf("Final config after %d swaps\nSet A:\n", num_swaps);
 	for(i=0;i<num_nodes;i++) printf("%d: %d %d %d\n", i, a[i][0], a[i][1], a[i][2]);
 
+	printf("Set B:\n");
+	for(i=0;i<num_nodes;i++) printf("%d: %d %d %d\n", i, b[i][0], b[i][1], b[i][2]);
+
+	printf("Time to execute: %f\n", time_taken);
 
 	// clean up time
 	for(i=0;i<num_nodes;i++){
