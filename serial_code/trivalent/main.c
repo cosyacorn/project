@@ -5,6 +5,7 @@
 #include<getopt.h>
 #include<unistd.h>
 #include<ctype.h>
+#include "machine.h"
 
 //function declarations
 void set_spins(int size, int * a_spin, int * b_spin);
