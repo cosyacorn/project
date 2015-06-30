@@ -13,31 +13,6 @@ void check_array(Array* a){
 		MPI_Abort(MPI_COMM_WORLD,1); 
 	}
 
-// Check local geometry fits easily
-/*  g->nx_local = g->nx / host.p_nx;
-  if (g->nx_local * host.p_nx != g->nx)
-  {
-    pprintf("%ZGrid mismatch in X-dir\n");
-    MPI_Abort(MPI_COMM_WORLD,1); 
-  }
-  if (g->nx_local % 2 == 1)
-  {
-    pprintf("%ZLocal X grid size must be even\n");
-    MPI_Abort(MPI_COMM_WORLD,1); 
-  }
-
-  g->ny_local = g->ny / host.p_ny;
-  if (g->ny_local * host.p_ny != g->ny)
-  {
-    pprintf("%ZGrid mismatch in Y-dir\n");
-    MPI_Abort(MPI_COMM_WORLD,1); 
-  }
-  if (g->ny_local % 2 == 1)
-  {
-    pprintf("%ZLocal Y grid size must be even\n");
-    MPI_Abort(MPI_COMM_WORLD,1); 
-  }
-*/
 	a->x_offset = host.num_nodes_local * a->x_local;
 
 
