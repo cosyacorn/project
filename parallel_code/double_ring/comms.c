@@ -30,10 +30,9 @@ static void send_forward(Field* f, Array* a, BoundaryComm* c){
 	int y;
 	// copy to buffer
 	//for (y=0;y<a->x_local;y++)
-		c->buffer_send_forward[y] = f->value[a->x_local-1][y];
+		c->buffer_send_forward[0] = f->value[a->x_local-1][y];
 
-	MPI_Isend(c->buffer_send_forward,a->x_local,MPI_INT,
-		host.neighbour[EAST],1000*host.rank,MPI_COMM_WORLD,c->send+EAST);
+	MPI_Isend(c->buffer_send_forward, 1, MPI_INT, host.neighbour[FORWARD],1000*host.rank,MPI_COMM_WORLD,c->send+EAST);
   
 	MPI_Irecv(c->buffer_recv_east,g->ny_local/2,MPI_INT,
 		host.neighbour[WEST],1000*host.neighbour[WEST],MPI_COMM_WORLD,
@@ -58,11 +57,11 @@ static void unpack(Field* f, Array* a, BoundaryComm* c)
 {
 	int x,y;
 
-	if (host.neighbour[SOUTH] != -1)
-		f->value[x][         -1] = c->buffer_recv_north[x/2]; 
+	if (host.neighbour[BACKWARD] != -1)
+		f->value[x][-1] = c->buffer_recv_forward[0]; 
 
-	if (host.neighbour[NORTH] != -1) 
-		f->value[x][g->ny_local] = c->buffer_recv_south[x/2]; 
+	if (host.neighbour[FORWARD] != -1) 
+		f->value[x][g->ny_local] = c->buffer_recv_backward[0]; 
 
 }
 

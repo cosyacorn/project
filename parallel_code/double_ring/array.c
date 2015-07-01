@@ -1,4 +1,5 @@
-#include <stdlib.h> 
+#include <stdlib.h>
+#include<stdio.h>
 #include "machine.h" 
 #include "array.h" 
 
@@ -13,29 +14,54 @@ void check_array(Array* a){
 		MPI_Abort(MPI_COMM_WORLD,1); 
 	}
 
-	a->x_offset = host.num_nodes_local * a->x_local;
+	a->x_offset = host.rank;
 
 
-	pprintf("Offsets: %d\n",a->x_offset);
+	
 
 
 	pprintf("%ZRunning Ising model on %d processes\n",host.np);
+
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	pprintf("Offset: %d\n",a->x_offset);
+
 	//pprintf("%ZGrid size = %d x %d\n",g->nx,g->ny);
 
 }
 
 
-Array * init_array(int num_nodes){
+Array * init_array(int num_nodes, int **graph){
+
+	int i, j;
 
 	Array * a = malloc(sizeof(Array));
 	a->x = num_nodes;
+	//a->x_offset = host.rank;
 
+	a->neighbours = (int **) malloc(sizeof(int *)*num_nodes);
+	for(i=0;i<num_nodes;i++)
+		a->neighbours[i] = (int *) malloc(sizeof(int)*3);
+
+	for(i=0;i<num_nodes;i++){
+		for(j=0;j<3;j++){
+			a->neighbours[i][j]=graph[host.rank*num_nodes+i][j];
+		}
+	}
 	check_array(a);
 	return a;
 }
 
-void free_array(Array *a)
-{
+//void print_array(int num_nodes, 
+
+void free_array(Array *a){
+
+	int i;
+
+	for(i=0;i<a->x;i++)
+		free(a->neighbours[i]);
+	free(a->neighbours);
+	free(a);
 }
 // =======================================
 

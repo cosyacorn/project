@@ -15,8 +15,11 @@ set_spins.o: set_spins.c $(INCS)
 machine.o: machine.c $(INCS)
 	$(CC) $(CCFLAGS) -c machine.c
 
-field.o: field.c $(INCS)
-	$(CC) $(CCFLAGS) -c field.c
+array.o: array.c $(INCS)
+	$(CC) $(CCFLAGS) -c array.c
+
+#field.o: field.c $(INCS)
+#	$(CC) $(CCFLAGS) -c field.c
 	
 clean:
 	$(RM)  ring $(OBJS)
