@@ -45,7 +45,7 @@ int main(int argc, char * argv[]){
 	//f_b = init_field(b);
 
 	for(i=0; i<num_nodes/host.np; i++)
-	//	pprintf("%d\n", f_a->value[i]);
+		pprintf("%d\n", f_a->value[i]);
 
 	send_boundary_data(f_a, a);
 

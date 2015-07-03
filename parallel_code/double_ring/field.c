@@ -39,7 +39,7 @@ Field * init_field(Array * a){
 	f->halo = malloc(sizeof(int)*2);
 	f->value = malloc(sizeof(int)*size);
 
-	for(i=0;i<size;i++) f->value[i] = i;
+	for(i=0;i<size;i++) f->value[i] = 100+host.rank+10*i;
 
 	return f;
 }
