@@ -5,33 +5,12 @@
 #include "machine.h" 
 #include "array.h" 
 #include "field.h" 
-/*
-Field* init_field(Array* a){
 
-	int size;
-	int i,x,y;
-	Field *f = malloc(sizeof(Field));
-
-	// Malloc space for active data
-	size = a->x_local+2;
-	f->active_data = malloc(sizeof(double) * size); 
-	for (i=0;i<size;i++)
-		f->active_data[i] = 1;
-
-
-	// Assign pointers to access data
-	f->value = malloc(sizeof(double *) * (a->x_local+2) );
-	for (i=0;i<a->x_local+2;i++)
-		f->value[i] = f->active_data + i * (a->x_local+2) + 1;
-	f->value++; // shift to start array at -1
-
-	return f;
-}
-*/
 
 Field * init_field(Array * a){
 
 	int i, size;
+	double d;
 	Field *f = malloc(sizeof(Field));
 
 	size = a->x_local; // store space for all local points
@@ -39,7 +18,12 @@ Field * init_field(Array * a){
 	f->halo = malloc(sizeof(int)*2);
 	f->value = malloc(sizeof(int)*size);
 
-	for(i=0;i<size;i++) f->value[i] = 100+host.rank+10*i;
+	for(i=0;i<size;i++){
+		d = drand48();
+		pprintf("%f\n", d);
+		if(d>0.5) f->value[i] = 1;
+		else f->value[i] = -1;
+	}
 
 	return f;
 }

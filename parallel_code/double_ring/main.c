@@ -4,6 +4,7 @@
 #include "machine.h"
 #include "array.h"
 #include "field.h"
+#include "comms.h"
 
 Machine host;
 
@@ -17,7 +18,7 @@ void free_graph(int ** graph, int size);
 
 int main(int argc, char * argv[]){
 
-	int rank, num_nodes, i, j, a_spin[4], b_spin[4], **a_graph, **b_graph;
+	int num_nodes, i, **a_graph, **b_graph;
 	Array *a, *b;
 	Field *f_a, *f_b;
 
@@ -28,46 +29,50 @@ int main(int argc, char * argv[]){
 
 	init_machine(argc,argv, num_nodes);
 
+	srand48(123+host.rank);
+	pprintf("%d\n", host.rank);
+
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	a_graph = make_graph(num_nodes);
-	//b_graph = make_graph(num_nodes);
+	b_graph = make_graph(num_nodes);
 
 	a = init_array(num_nodes/host.np, a_graph);
-	//b = init_array(num_nodes/host.np, b_graph);
+	b = init_array(num_nodes/host.np, b_graph);
 
 
-	pprintf("%ZTotal nodes: %d\n", a->x);
+	//pprintf("%ZTotal nodes: %d\n", a->x);
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	f_a = init_field(a);
-	//f_b = init_field(b);
+	f_b = init_field(b);
 
 	for(i=0; i<num_nodes/host.np; i++)
-		pprintf("%d\n", f_a->value[i]);
+		//pprintf("%d\n", f_a->value[i]);
 
 	send_boundary_data(f_a, a);
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	//for(i=0; i<num_nodes/host.np; i++)
-	pprintf("halo: %d %d\n", f_a->halo[0], f_a->halo[1]);
+	//pprintf("halo: %d %d\n", f_a->halo[0], f_a->halo[1]);
 	//pprintf("host neighbour %d %d\n", host.neighbour[BACKWARD], host.neighbour[FORWARD]);
+
 
 	// clean up
 	free_array(a);
-	//free_array(b);
+	free_array(b);
 
 	free_graph(a_graph, num_nodes);
-	//free_graph(b_graph, num_nodes);
+	free_graph(b_graph, num_nodes);
 
 	free_field(f_a);
-	//free_field(f_b);
+	free_field(f_b);
 
+	// finish parallel
 	MPI_Finalize();
 
-	//free_field(f_a);
 	return 0;
 }
 

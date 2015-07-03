@@ -1,5 +1,5 @@
 CC=mpicc
-CFLAGS=-O3 
+CFLAGS=-O3 -Wall
 INCS=machine.h array.h field.h comms.h
 LIBS=-lm
 

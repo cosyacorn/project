@@ -22,7 +22,7 @@ void check_array(Array* a){
 
 	//pprintf("%Z Offset: %d\n",a->x_offset);
 
-	//pprintf("%ZGrid size = %d x %d\n",g->nx,g->ny);
+	
 
 }
 
