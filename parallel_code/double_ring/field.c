@@ -5,36 +5,53 @@
 #include "machine.h" 
 #include "array.h" 
 #include "field.h" 
-
+/*
 Field* init_field(Array* a){
+
 	int size;
 	int i,x,y;
 	Field *f = malloc(sizeof(Field));
 
 	// Malloc space for active data
-	size = 2*(a->x_local+2) ;
+	size = a->x_local+2;
 	f->active_data = malloc(sizeof(double) * size); 
 	for (i=0;i<size;i++)
-		f->active_data[i] = 1.0;
+		f->active_data[i] = 1;
+
 
 	// Assign pointers to access data
 	f->value = malloc(sizeof(double *) * (a->x_local+2) );
-	for (x=0;x<a->x_local+2;x++)
-		f->value[x] = f->active_data + x * (a->x_local+2) + 1;
+	for (i=0;i<a->x_local+2;i++)
+		f->value[i] = f->active_data + i * (a->x_local+2) + 1;
 	f->value++; // shift to start array at -1
+
+	return f;
+}
+*/
+
+Field * init_field(Array * a){
+
+	int i, size;
+	Field *f = malloc(sizeof(Field));
+
+	size = a->x_local; // store space for all local points
+
+	f->halo = malloc(sizeof(int)*2);
+	f->value = malloc(sizeof(int)*size);
+
+	for(i=0;i<size;i++) f->value[i] = i;
 
 	return f;
 }
 
 void free_field(Field* f){
-	int k;
-	free(f->active_data);
-	// Undo shift of f->value pointer before freeing 
-	f->value--;
+
+	free(f->halo);
 	free(f->value);
 	free(f);
 }
 
+/*
 void write_field(char* filestub, Field *f, Array *a){
 	int x,y;
 	FILE* o;
@@ -50,4 +67,4 @@ void write_field(char* filestub, Field *f, Array *a){
 
 	fclose(o);
 	free(filename);
-}
+}*/

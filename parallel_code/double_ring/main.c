@@ -3,6 +3,7 @@
 #include<mpi.h>
 #include "machine.h"
 #include "array.h"
+#include "field.h"
 
 Machine host;
 
@@ -17,8 +18,9 @@ void free_graph(int ** graph, int size);
 int main(int argc, char * argv[]){
 
 	int rank, num_nodes, i, j, a_spin[4], b_spin[4], **a_graph, **b_graph;
-
 	Array *a, *b;
+	Field *f_a, *f_b;
+
 	num_nodes=16;
 
 
@@ -29,27 +31,43 @@ int main(int argc, char * argv[]){
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	a_graph = make_graph(num_nodes);
-	b_graph = make_graph(num_nodes);
+	//b_graph = make_graph(num_nodes);
 
 	a = init_array(num_nodes/host.np, a_graph);
-	b = init_array(num_nodes/host.np, b_graph);
+	//b = init_array(num_nodes/host.np, b_graph);
+
+
+	pprintf("%ZTotal nodes: %d\n", a->x);
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
+	f_a = init_field(a);
+	//f_b = init_field(b);
 
 	for(i=0; i<num_nodes/host.np; i++)
-		printf("%d %d\n",i, a->neighbours[i][1]);
+	//	pprintf("%d\n", f_a->value[i]);
 
+	send_boundary_data(f_a, a);
 
+	MPI_Barrier(MPI_COMM_WORLD);
 
+	//for(i=0; i<num_nodes/host.np; i++)
+	pprintf("halo: %d %d\n", f_a->halo[0], f_a->halo[1]);
+	//pprintf("host neighbour %d %d\n", host.neighbour[BACKWARD], host.neighbour[FORWARD]);
+
+	// clean up
 	free_array(a);
-	free_array(b);
+	//free_array(b);
+
+	free_graph(a_graph, num_nodes);
+	//free_graph(b_graph, num_nodes);
+
+	free_field(f_a);
+	//free_field(f_b);
 
 	MPI_Finalize();
 
-	free_graph(a_graph, num_nodes);
-	free_graph(b_graph, num_nodes);
-
+	//free_field(f_a);
 	return 0;
 }
 

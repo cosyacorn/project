@@ -3,8 +3,8 @@
 
 typedef struct
 {
-  int *active_data;  	// Storage for the actively managed data-points
-  int **value;		// Access pointers
+  int *halo;	// vals for front and rear points on ahead and behind processes
+  int *value;	// vals for points on local process
 }
 Field;
 

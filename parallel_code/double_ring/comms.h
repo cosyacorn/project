@@ -1,1 +1,1 @@
-void send_boundary_data(Field* f, int eo, Array* a);
+void send_boundary_data(Field* f, Array* a);
