@@ -20,10 +20,12 @@ Field * init_field(Array * a){
 
 	for(i=0;i<size;i++){
 		d = drand48();
-		pprintf("%f\n", d);
+		//pprintf("%f\n", d);
 		if(d>0.5) f->value[i] = 1;
 		else f->value[i] = -1;
 	}
+	//for(i=0;i<size;i++)
+		//f->value[i]=host.rank;
 
 	return f;
 }

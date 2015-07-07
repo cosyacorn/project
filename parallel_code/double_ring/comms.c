@@ -48,7 +48,7 @@ static void send_backward(Field* f, Array* a, BoundaryComm* c){
 
 static void unpack(Field* f, Array* a, BoundaryComm* c){
 
-	if (host.neighbour[BACKWARD] != -1)
+	if (host.neighbour[BACKWARD] != -1) // data from in front being sent to halo[1] of proccess behind
 		f->halo[FORWARD] = c->buffer_recv_forward[0]; 
 
 	if (host.neighbour[FORWARD] != -1) 

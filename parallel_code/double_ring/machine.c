@@ -51,7 +51,7 @@ void init_machine(int argc, char *argv[], int tot_nodes){
 	pprintf("%ZMachine geometry: %d nodes on %d procs. %d nodes per proc\n",host.num_nodes_tot , host.np, host.num_nodes_local);
 
 	// Work out neighbouring process ranks
-	host.neighbour[BACKWARD] = (host.rank - 1 + host.np)%host.np;
-	host.neighbour[FORWARD] = (host.rank + 1)%host.np;
+	host.neighbour[BACKWARD] = (host.rank - 1 + host.np)%host.np; // rank of process behind
+	host.neighbour[FORWARD] = (host.rank + 1)%host.np; //rank of process ahead
 
 }

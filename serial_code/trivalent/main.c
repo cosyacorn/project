@@ -5,7 +5,7 @@
 #include<getopt.h>
 #include<unistd.h>
 #include<ctype.h>
-#include "machine.h"
+
 
 //function declarations
 void set_spins(int size, int * a_spin, int * b_spin);
@@ -19,7 +19,8 @@ int main(int argc, char * argv[]){
 	srand48(time(NULL));
 
 	int  i, j, k, num_points, num_iters, act, prod, fflag, bflag, iflag, opt;
-	double beta, mag;
+	double beta, mag, time_taken;
+	clock_t begin, end;
 	FILE * graph;
 
 	fflag=0;
@@ -64,13 +65,13 @@ int main(int argc, char * argv[]){
 	}
 
 	if(fflag==0) graph=fopen("test_graph.txt", "r");
-	if(bflag==0) beta=0.5;
-	if (iflag==0) num_iters=100;
+	if(bflag==0) beta=0.001;
+	if (iflag==0) num_iters=1000;
 
 
 	// READ GRAPH FROM FILE
 		
-	graph = fopen(argv[1], "r");
+	//graph = fopen(argv[1], "r");
 
 	fscanf(graph, "%d\n", &num_points);
 	
@@ -99,14 +100,16 @@ int main(int argc, char * argv[]){
 	// FINISH READING GRAPH
 
 	// PRINT GRAPH
-	for(k=0;k<2;k++){
-		printf("Set %d:\n", k);
-		for(i=0;i<num_points;i++){
-			printf("neighbours of point %d: ", i);
-			for(j=0;j<3;j++){
-				printf("%d ", a[i][j]);
+	if(num_points<20){
+		for(k=0;k<2;k++){
+			printf("Set %d:\n", k);
+			for(i=0;i<num_points;i++){
+				printf("neighbours of point %d: ", i);
+				for(j=0;j<3;j++){
+					printf("%d ", a[i][j]);
+				}
+				printf("\n");
 			}
-			printf("\n");
 		}
 	}
 
@@ -117,7 +120,14 @@ int main(int argc, char * argv[]){
 	set_spins(num_points, a_spin, b_spin);
 	//print_spins(num_points, a_spin, b_spin);
 
+	double sum;
+
+	// begin timing
+	begin = clock();
+
+	mag = 0.0;
 	for(k=0;k<num_iters;k++){
+		sum=0.0;
 		//update a
 		for(i=0;i<num_points;i++){
 			a_spin[i] = propose_spin_flip(beta, a_spin[i], b_spin[a[i][0]], b_spin[a[i][1]], b_spin[a[i][2]]);
@@ -127,19 +137,21 @@ int main(int argc, char * argv[]){
 		for(i=0;i<num_points;i++){
 			b_spin[i] = propose_spin_flip(beta, b_spin[i], a_spin[b[i][0]], a_spin[b[i][1]], a_spin[b[i][2]]);
 		}
-		printf("Update %d:\n", k+1);
+		//printf("Update %d:\n", k+1);
 		//print_spins(num_points, a_spin, b_spin);
 		//printf("\n");
 			
 		//calculate the magentisation
-		mag=0;
+		//mag=0;
 		for(i=0;i<num_points;i++){
-			mag+=((double)a_spin[i]+(double)b_spin[i]);
+			sum+=((double)a_spin[i]+(double)b_spin[i]);
 		}
+		sum=fabs(sum/(double)num_points);
+		mag+=sum;		
 
-		mag/=(double)num_points;
-		printf("Magnetisation: %f\n", mag);
+		//printf("Magnetisation: %f\n", mag);
 
+		/*
 		//calculate the action
 		act=0;
 		for(i=0;i<num_points;i++){
@@ -150,7 +162,16 @@ int main(int argc, char * argv[]){
 			act+=1-a_spin[i]*prod;
 		}
 		printf("Action: %d\n", act);
+		*/
 	}
+
+	// end timing
+	end = clock();
+
+	// calculate time
+	time_taken = (double)(end - begin)/CLOCKS_PER_SEC;	
+
+	printf("beta: %lf; avg magnetisation %lf; time taken: %lf\n",beta,mag/(double) num_iters, time_taken);
 
 	for(i=0;i<num_points;i++){
 		free(a[i]);
