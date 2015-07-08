@@ -52,7 +52,7 @@ int hamiltonian_local(int spin, int spin1, int spin2, int spin3){
 	else
 		c=0;
 
-	H=-(a+b+c);
+	H=(a+b+c);
 	return H;
 }
 
