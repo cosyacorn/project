@@ -37,7 +37,7 @@ void free_field(Field* f){
 	free(f);
 }
 
-/*
+
 void write_field(char* filestub, Field *f, Array *a){
 	int x,y;
 	FILE* o;
@@ -53,4 +53,4 @@ void write_field(char* filestub, Field *f, Array *a){
 
 	fclose(o);
 	free(filename);
-}*/
+}

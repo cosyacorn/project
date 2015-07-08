@@ -18,8 +18,9 @@ int main(int argc, char * argv[]){
 	Array *a, *b;
 	Field *f_a, *f_b;
 
-	num_nodes=320;
-	num_updates=10000;
+	num_nodes=3600;
+	beta=0.001;
+	num_updates=100000;
 
 	MPI_Init(&argc,&argv);
 
@@ -43,7 +44,7 @@ int main(int argc, char * argv[]){
 
 	t1 = MPI_Wtime();
 
-	for(beta=0.01;beta<1.00;beta+=0.01){
+	//for(beta=0.01;beta<1.00;beta+=0.01){
 		avg=0.0;
 		for(i=0;i<num_updates;i++){
 			update(size, f_a, f_b, beta, a, b);
@@ -53,7 +54,7 @@ int main(int argc, char * argv[]){
 		}
 
 		pprintf("%Zbeta: %lf; avg magnetisation: %lf\n",beta,avg/(double) num_updates);
-	}
+	//}
 
 	/*for(beta=1.00;beta>0.00;beta-=0.01){
 		avg=0.0;
