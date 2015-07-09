@@ -18,9 +18,9 @@ int main(int argc, char * argv[]){
 	Array *a, *b;
 	Field *f_a, *f_b;
 
-	num_nodes=3600;
+	num_nodes=360;
 	beta=0.001;
-	num_updates=100000;
+	num_updates=1000;
 
 	MPI_Init(&argc,&argv);
 
@@ -53,7 +53,7 @@ int main(int argc, char * argv[]){
 			avg += magnetisation(f_a,a) + magnetisation(f_b,b);
 		}
 
-		pprintf("%Zbeta: %lf; avg magnetisation: %lf\n",beta,avg/(double) num_updates);
+		//pprintf("%Zbeta: %lf; avg magnetisation: %lf\n",beta,avg/(double) num_updates);
 	//}
 
 	/*for(beta=1.00;beta>0.00;beta-=0.01){
@@ -72,7 +72,20 @@ int main(int argc, char * argv[]){
 
 	t2 = MPI_Wtime();
 
-	pprintf("%Ztotal time taken: %lf\n", t2-t1);
+	//pprintf("%Ztotal time taken: %lf\n", t2-t1);
+
+	if(host.rank==0){
+		FILE* o;
+
+		o = fopen("results.txt","w");
+
+		fprintf(o, "Machine geometry: %d nodes on %d procs. %d nodes per proc\n",host.num_nodes_tot , host.np, host.num_nodes_local);
+		fprintf(o, "beta: %lf; avg magnetisation: %lf\n",beta,avg/(double) num_updates);
+		fprintf(o, "total time taken: %lf\n", t2-t1);
+
+		fclose(o);
+	}
+
 	// clean up
 	free_array(a);
 	free_array(b);

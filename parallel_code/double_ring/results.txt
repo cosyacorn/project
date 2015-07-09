@@ -1,0 +1,3 @@
+Machine geometry: 360 nodes on 4 procs. 90 nodes per proc
+beta: 0.001000; avg magnetisation: 0.111389
+total time taken: 0.072403
