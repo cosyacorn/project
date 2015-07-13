@@ -29,7 +29,7 @@ int main(int argc, char * argv[]){
 	srand48(time(NULL)+host.rank);
 	//pprintf("%d\n", host.rank);
 
-	MPI_Barrier(MPI_COMM_WORLD);
+	//MPI_Barrier(MPI_COMM_WORLD);
 
 	a_graph = make_graph(num_nodes);
 	b_graph = make_graph(num_nodes);
@@ -40,7 +40,7 @@ int main(int argc, char * argv[]){
 	f_a = init_field(a);
 	f_b = init_field(b);
 	
-	MPI_Barrier(MPI_COMM_WORLD);
+	//MPI_Barrier(MPI_COMM_WORLD);
 
 	t1 = MPI_Wtime();
 
@@ -48,8 +48,6 @@ int main(int argc, char * argv[]){
 		avg=0.0;
 		for(i=0;i<num_updates;i++){
 			update(size, f_a, f_b, beta, a, b);
-			send_boundary_data(f_a, a);
-			send_boundary_data(f_b, b);
 			avg += magnetisation(f_a,a) + magnetisation(f_b,b);
 		}
 

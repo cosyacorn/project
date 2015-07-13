@@ -18,9 +18,9 @@ int main(int argc, char * argv[]){
 	Array *a, *b;
 	Field *f_a, *f_b;
 
-	num_nodes=360;
+	num_nodes=8;
 	beta=0.001;
-	num_updates=1000;
+	num_updates=1;
 
 	MPI_Init(&argc,&argv);
 
@@ -37,11 +37,13 @@ int main(int argc, char * argv[]){
 	a = init_array(size=num_nodes/host.np, a_graph);
 	b = init_array(size, b_graph);	
 
+	//pprintf("%d\n", a->neighbour[1][1]);
+
 	f_a = init_field(a);
 	f_b = init_field(b);
 	
 	MPI_Barrier(MPI_COMM_WORLD);
-
+/*
 	t1 = MPI_Wtime();
 
 	//for(beta=0.01;beta<1.00;beta+=0.01){
@@ -49,13 +51,13 @@ int main(int argc, char * argv[]){
 		for(i=0;i<num_updates;i++){
 			update(size, f_a, f_b, beta, a, b);
 			send_boundary_data(f_a, a);
-			send_boundary_data(f_b, b);
+			//send_boundary_data(f_b, b);
 			avg += magnetisation(f_a,a) + magnetisation(f_b,b);
 		}
 
 		//pprintf("%Zbeta: %lf; avg magnetisation: %lf\n",beta,avg/(double) num_updates);
 	//}
-
+*/
 	/*for(beta=1.00;beta>0.00;beta-=0.01){
 		avg=0.0;
 		for(i=0;i<num_updates;i++){
@@ -70,11 +72,14 @@ int main(int argc, char * argv[]){
 		pprintf("%Zbeta: %lf; avg magnetisation: %lf\n",beta,avg/(double) num_updates);
 	}*/
 
-	t2 = MPI_Wtime();
+	send_boundary_data(f_a, a);
+
+//	t2 = MPI_Wtime();
 
 	//pprintf("%Ztotal time taken: %lf\n", t2-t1);
 
-	if(host.rank==0){
+	// write results to file
+/*	if(host.rank==0){
 
 		FILE* o;
 		char *filename = malloc(sizeof(char) * 15);
@@ -89,7 +94,7 @@ int main(int argc, char * argv[]){
 		fclose(o);
 		free(filename);
 	}
-
+*/
 	// clean up
 	free_array(a);
 	free_array(b);

@@ -5,7 +5,7 @@ typedef struct {
 
 	int x_offset; // Array offsets
 
-	int **neighbours;
+	int **neighbour;
 }
 Array;
 

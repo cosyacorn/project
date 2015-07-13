@@ -36,13 +36,13 @@ Array * init_array(int num_nodes, int **graph){
 	a->x = a->x_local*host.np;
 	a->x_offset = host.rank;
 
-	a->neighbours = (int **) malloc(sizeof(int *)*num_nodes);
+	a->neighbour = (int **) malloc(sizeof(int *)*num_nodes);
 	for(i=0;i<num_nodes;i++)
-		a->neighbours[i] = (int *) malloc(sizeof(int)*3);
+		a->neighbour[i] = (int *) malloc(sizeof(int)*3);
 
 	for(i=0;i<num_nodes;i++){
 		for(j=0;j<3;j++){
-			a->neighbours[i][j]=graph[host.rank*num_nodes+i][j];
+			a->neighbour[i][j]=graph[host.rank*num_nodes+i][j];
 		}
 	}
 	check_array(a);
@@ -56,8 +56,8 @@ void free_array(Array *a){
 	int i;
 
 	for(i=0;i<a->x_local;i++)
-		free(a->neighbours[i]);
-	free(a->neighbours);
+		free(a->neighbour[i]);
+	free(a->neighbour);
 	free(a);
 }
 // =======================================
