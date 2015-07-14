@@ -42,7 +42,7 @@ int main(int argc, char * argv[]){
 	f_a = init_field(a);
 	f_b = init_field(b);
 	
-	pprintf("%d\n", a->x_local);
+	//pprintf("%d\n", a->x_local);
 
 	MPI_Barrier(MPI_COMM_WORLD);
 /*

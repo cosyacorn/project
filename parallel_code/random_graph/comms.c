@@ -71,8 +71,9 @@ static BoundaryComm* init_comm(Array* a){
 	for(i=0;i<a->x_local;i++){
 		// j=3 for trivalent - need to generalise
 		for(j=0;j<3;j++){
-			if(a->neighbour[i][j] < host.rank*a->x_local || a->neighbour[i][j] >= (host.rank+1)*a->x_local)
-				send_count[a->neighbour[i][j]/host.np]++;
+			if(a->neighbour[i][j] < host.rank*a->x_local || a->neighbour[i][j] >= (host.rank+1)*a->x_local){
+				send_count[a->neighbour[i][j]/a->x_local]++;
+			}
 		}
 	}
 
@@ -85,47 +86,41 @@ static BoundaryComm* init_comm(Array* a){
 	for(i=0;i<a->x_local;i++){
 		k=0;
 		for(j=0;j<3;j++){
-			//pprintf("%d\n", host.rank*a->x_local);
 			if(a->neighbour[i][j] < host.rank*a->x_local || a->neighbour[i][j] >= (host.rank+1)*a->x_local){
-				c->buffer_send[a->neighbour[i][j]/host.np][k] = a->neighbour[a->neighbour[i][j]/host.np][j];
+				c->buffer_send[a->neighbour[i][j]/a->x_local][k] = a->neighbour[i][j];
 				k++;
 			}
 		}
 	}
 
-	//pprintf("all good 4\n");
-
 	MPI_Barrier(MPI_COMM_WORLD);
 
-//	for(i=0;i<host.np;i++)
-	 	MPI_Allreduce(&send_count[0], &recv_count[0], 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-	//MPI_Allreduce(&sum_local, &sum_global, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-
-
-//	pprintf("recv count %d\n", recv_count[0]);
+	for(i=0;i<host.np;i++){
+		for(j=0;j<host.np;j++){
+			MPI_Isend(&send_count[i], 1, MPI_INT, j, 1,MPI_COMM_WORLD, c->send);
+			MPI_Irecv(&recv_count[j], 1, MPI_INT, i, 1,MPI_COMM_WORLD, c->recv);
+		}
+	}
 
 	c->buffer_recv = (int **) malloc(sizeof(int *) * host.np);
 	for(i=0;i<host.np;i++){
-		c->buffer_recv[i] = (int *) malloc(sizeof(int));
+		c->buffer_recv[i] = (int *) malloc(sizeof(int)*recv_count[i]);
 	}
-  
-	//c->buffer_send_backward = malloc(sizeof(int) * 1); 
-	//c->buffer_recv_forward = malloc(sizeof(int) * 1); 
-  
+
+	//free(send_count);
+	//free(recv_count);
+
 	return c; 
 }
 
-/*
+
 static void free_comm(BoundaryComm* c){
 
-	free(c->buffer_send_forward);
-	free(c->buffer_recv_backward);
-  
-	free(c->buffer_send_backward);
-	free(c->buffer_recv_forward);
+	free(c->buffer_send);
+	free(c->buffer_recv);
 
 	free(c);
-}*/
+}
 
 // ------------------------------------------------------------
 //        Externally visible functions:
