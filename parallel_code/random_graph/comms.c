@@ -64,11 +64,7 @@ static BoundaryComm* init_comm(Array* a){
 	send_count = malloc(sizeof(int) * host.np);
 	recv_count = malloc(sizeof(int) * host.np);
 
-	pprintf("all good\n");
-
 	for(i=0;i<host.np;i++) send_count[i]=0;
-
-	pprintf("all good 1\n");
 
 	//determine how many to be sent to each process
 
@@ -80,18 +76,16 @@ static BoundaryComm* init_comm(Array* a){
 		}
 	}
 
-	pprintf("all good 2\n");
-
 	c->buffer_send = (int **) malloc(sizeof(int *) * host.np);
 	for(i=0;i<host.np;i++){
 		c->buffer_send[i] = (int *) malloc(sizeof(int) * send_count[i]);
 	}
 
-	pprintf("all good 3\n");
 
 	for(i=0;i<a->x_local;i++){
 		k=0;
 		for(j=0;j<3;j++){
+			//pprintf("%d\n", host.rank*a->x_local);
 			if(a->neighbour[i][j] < host.rank*a->x_local || a->neighbour[i][j] >= (host.rank+1)*a->x_local){
 				c->buffer_send[a->neighbour[i][j]/host.np][k] = a->neighbour[a->neighbour[i][j]/host.np][j];
 				k++;
@@ -99,11 +93,16 @@ static BoundaryComm* init_comm(Array* a){
 		}
 	}
 
-	pprintf("all good 4\n");
+	//pprintf("all good 4\n");
 
-	for(i=0;i<host.np;i++) MPI_Reduce(&send_count[i], &recv_count[i], 1, MPI_INT, MPI_SUM, i, MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
 
-	pprintf("%d\n", recv_count[0]);
+//	for(i=0;i<host.np;i++)
+	 	MPI_Allreduce(&send_count[0], &recv_count[0], 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+	//MPI_Allreduce(&sum_local, &sum_global, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+
+//	pprintf("recv count %d\n", recv_count[0]);
 
 	c->buffer_recv = (int **) malloc(sizeof(int *) * host.np);
 	for(i=0;i<host.np;i++){
