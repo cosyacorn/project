@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "machine.h" 
 #include "array.h" 
-#include "field.h" 
+#include "field.h"
 #include "comms.h" 
 
 // =======================================
@@ -18,9 +18,6 @@ typedef struct {
 	int *send_count;
 	int *recv_count;
 
-	//int *buffer_send_backward;
-	//int *buffer_recv_backward;
-
 } BoundaryComm; 
 
 
@@ -29,14 +26,25 @@ typedef struct {
 // Don't call these outside this file... 
 static void send(Field* f, Array* a, BoundaryComm* c){
 
+	int i, j, k;
+
 	// copy to buffer
-	c->buffer_sends[0] = f->value[a->x_local-1];
-	
+	for(i=0;i<a->x_local;i++){
+		k=0;
+		for(j=0;j<3;j++){
+			if(a->neighbour[i][j] < host.rank*a->x_local || a->neighbour[i][j] >= (host.rank+1)*a->x_local){
+				c->buffer_send[a->neighbour[i][j]/a->x_local][k] = f->value[i];
+				k++;
+			}
+		}
+	}
 
-	MPI_Isend(c->buffer_send_forward, 1, MPI_INT, host.neighbour[FORWARD], 1,MPI_COMM_WORLD, c->send+FORWARD);
-  
-	MPI_Irecv(c->buffer_recv_backward, 1, MPI_INT, host.neighbour[BACKWARD], 1,MPI_COMM_WORLD,	c->recv+FORWARD);
-
+	for(i=0;i<host.np;i++){
+		for(j=0;j<host.np;j++){
+			MPI_Isend(c->buffer_send[i], c->send_count[i], MPI_INT, j, 1, MPI_COMM_WORLD, c->send);
+			MPI_Irecv(c->buffer_recv[j], c->recv_count[j], MPI_INT, i, 1, MPI_COMM_WORLD, c->recv);
+		}
+	}
 }
 
 /*static void unpack(Field* f, Array* a, BoundaryComm* c){
@@ -51,7 +59,7 @@ static void send(Field* f, Array* a, BoundaryComm* c){
 
 static BoundaryComm* init_comm(Array* a){
 
-	int i, j, k;
+	int i, j;
 	BoundaryComm *c = malloc(sizeof(BoundaryComm));
 
 	c->send_count = malloc(sizeof(int) * host.np);
@@ -75,16 +83,6 @@ static BoundaryComm* init_comm(Array* a){
 		c->buffer_send[i] = (int *) malloc(sizeof(int) * c->send_count[i]);
 	}
 
-	for(i=0;i<a->x_local;i++){
-		k=0;
-		for(j=0;j<3;j++){
-			if(a->neighbour[i][j] < host.rank*a->x_local || a->neighbour[i][j] >= (host.rank+1)*a->x_local){
-				c->buffer_send[a->neighbour[i][j]/a->x_local][k] = a->neighbour[i][j];
-				k++;
-			}
-		}
-	}
-
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	for(i=0;i<host.np;i++){
@@ -93,6 +91,8 @@ static BoundaryComm* init_comm(Array* a){
 			MPI_Irecv(&c->recv_count[j], 1, MPI_INT, i, 1,MPI_COMM_WORLD, c->recv);
 		}
 	}
+
+	//pprintf("%d\n", c->recv_count[1]);
 
 	c->buffer_recv = (int **) malloc(sizeof(int *) * host.np);
 	for(i=0;i<host.np;i++){
@@ -130,13 +130,13 @@ void send_boundary_data(Field* f, Array* a){
 
 	BoundaryComm* comm = init_comm(a);
 
-//	send_forward(f, a, comm);
-//	send_backward(f, a, comm);
+	 send(f, a, comm);
+
 
 //	MPI_Waitall(2, comm->send, comm->send_status);
 //	MPI_Waitall(2, comm->recv, comm->recv_status);
 
 //	unpack(f, a, comm);
 
-	free_comm(comm);
+//	free_comm(comm);
 }
