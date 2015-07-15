@@ -27,7 +27,7 @@ int main(int argc, char * argv[]){
 	init_machine(argc,argv, num_nodes);
 
 	srand48(time(NULL)+host.rank);
-	//pprintf("%d\n", host.rank);
+
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
@@ -42,7 +42,8 @@ int main(int argc, char * argv[]){
 	f_a = init_field(a);
 	f_b = init_field(b);
 	
-	//pprintf("%d\n", a->x_local);
+	for(i=0;i<size;i++)
+		pprintf("%d\n", f_a->value[i]);
 
 	MPI_Barrier(MPI_COMM_WORLD);
 /*
