@@ -16,10 +16,27 @@ int ** make_graph(int num_nodes){
 	for(i=0;i<num_nodes;i++){
 		graph[i] = (int *) malloc(sizeof(int)*3);
 		
-		for(j=0;j<3;j++){
-			graph[i][j] = (i-1+j+num_nodes)%num_nodes;
-		}
+		//for(j=0;j<3;j++){
+		//	graph[i][j] = (i-1+j+num_nodes)%num_nodes;
+		//}
 	}
+
+	graph[0][0] = 0;
+	graph[0][1] = 1; 
+	graph[0][2] = 3;
+
+	graph[1][0] = 0;
+	graph[1][1] = 1;
+	graph[1][2] = 2;
+
+	graph[2][0] = 1;
+	graph[2][1] = 2;
+	graph[2][2] = 3;
+
+	graph[3][0] = 0;
+	graph[3][1] = 2;
+	graph[3][2] = 3;
+
 
 	return graph;
 }
@@ -57,7 +74,7 @@ int hamiltonian_local(int spin, int spin1, int spin2, int spin3){
 }
 
 
-
+/*
 // update func (only updates one bipartite set)
 // only visible in this file
 void update_one_field(int size, Field *f_a, Field *f_b, double beta){
@@ -138,4 +155,4 @@ double magnetisation(Field* phi, Array* a){
   return fabs((double) sum_global) / ((double) a->x);
     
   
-}
+}*/

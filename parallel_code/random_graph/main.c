@@ -18,7 +18,7 @@ int main(int argc, char * argv[]){
 	Array *a, *b;
 	Field *f_a, *f_b;
 
-	num_nodes=8;
+	num_nodes=4;
 	beta=0.001;
 	num_updates=1;
 
@@ -26,15 +26,18 @@ int main(int argc, char * argv[]){
 
 	init_machine(argc,argv, num_nodes);
 
+
 	srand48(time(NULL)+host.rank);
 
 
-	MPI_Barrier(MPI_COMM_WORLD);
+	//MPI_Barrier(MPI_COMM_WORLD);
 
 	a_graph = make_graph(num_nodes);
 	b_graph = make_graph(num_nodes);
 
-	a = init_array(size=num_nodes/host.np, a_graph);
+	size=num_nodes/host.np;
+
+	a = init_array(size, a_graph);
 	b = init_array(size, b_graph);	
 
 	//pprintf("%d\n", a->neighbour[1][1]);
@@ -43,9 +46,12 @@ int main(int argc, char * argv[]){
 	f_b = init_field(b);
 	
 	for(i=0;i<size;i++)
-		pprintf("%d\n", f_a->value[i]);
+	//	pprintf("%d\n", f_a->value[i]);
 
 	MPI_Barrier(MPI_COMM_WORLD);
+
+
+
 /*
 	t1 = MPI_Wtime();
 
@@ -77,6 +83,7 @@ int main(int argc, char * argv[]){
 
 	send_boundary_data(f_a, a);
 
+	//pprintf("halo %d\n", f_a->halo[0][0]);
 //	t2 = MPI_Wtime();
 
 	//pprintf("%Ztotal time taken: %lf\n", t2-t1);

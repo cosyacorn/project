@@ -9,13 +9,12 @@
 
 Field * init_field(Array * a){
 
-	int i, size;
+	int i, j, size;
 	double d;
 	Field *f = malloc(sizeof(Field));
 
 	size = a->x_local; // store space for all local points
 
-	f->halo = malloc(sizeof(int)*2);
 	f->value = malloc(sizeof(int)*size);
 
 	for(i=0;i<size;i++){
@@ -26,6 +25,32 @@ Field * init_field(Array * a){
 	}
 	//for(i=0;i<size;i++)
 		//f->value[i]=host.rank;
+
+
+
+	f->halo_count = (int *) malloc(sizeof(int) * host.np);
+	
+	for(i=0;i<host.np;i++) f->halo_count[i]=0;
+
+	//for(i=0;i<host.np;i++) pprintf("halo count %d from proc %d\n", f->halo_count[i], i);
+
+	//determine how many neighbours are on each process
+
+	for(i=0;i<a->x_local;i++){
+		// j=3 for trivalent - need to generalise
+		for(j=0;j<3;j++){
+			if(a->neighbour[i][j] < host.rank*a->x_local || a->neighbour[i][j] >= (host.rank+1)*a->x_local)
+				f->halo_count[a->neighbour[i][j]/a->x_local]++;
+		}
+	}
+
+	
+
+	f->halo = (int **) malloc(sizeof(int *) * host.np);
+	for(i=0;i<host.np;i++){
+		f->halo[i] = (int *) malloc(sizeof(int) * f->halo_count[i]);
+	}
+
 
 	return f;
 }

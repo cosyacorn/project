@@ -1,7 +1,8 @@
 typedef struct
 {
-  int *halo;	// vals for front and rear points on ahead and behind processes
-  int *value;	// vals for points on local process
+	int **halo;	// vals for front and rear points on ahead and behind processes
+	int *halo_count;
+	int *value;	// vals for points on local process
 }
 Field;
 
