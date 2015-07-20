@@ -11,7 +11,7 @@ void swap_alg(int num_nodes, int num_swaps, int **a, int **b);
 int main(int argc, char *argv[]){
 
 	srand(time(NULL));
-	int num_nodes, i, opt, nflag, sflag, index1_1, index1_2, index2_1, index2_2, flag, temp, temp2, num_swaps;
+	int num_nodes, i, opt, nflag, sflag, num_swaps;
 	double time_taken;
 	clock_t begin, end;
 
@@ -79,11 +79,11 @@ int main(int argc, char *argv[]){
 	reverse_engineer(a, b, num_nodes);
 
 	// print initial config
-	printf("Initial config\nSet A:\n");
-	for(i=0;i<num_nodes;i++) printf("%d: %d %d %d\n", i, a[i][0], a[i][1], a[i][2]);
+	//printf("Initial config\nSet A:\n");
+	//for(i=0;i<num_nodes;i++) printf("%d: %d %d %d\n", i, a[i][0], a[i][1], a[i][2]);
 
-	printf("Set B:\n");
-	for(i=0;i<num_nodes;i++) printf("%d: %d %d %d\n", i, b[i][0], b[i][1], b[i][2]);
+	//printf("Set B:\n");
+	//for(i=0;i<num_nodes;i++) printf("%d: %d %d %d\n", i, b[i][0], b[i][1], b[i][2]);
 
 
 	swap_alg(num_nodes, num_swaps, a, b);
@@ -95,13 +95,13 @@ int main(int argc, char *argv[]){
 	time_taken = (double)(end - begin)/CLOCKS_PER_SEC;
 
 	// print final config
-	printf("Final config after %d swaps\nSet A:\n", num_swaps);
-	for(i=0;i<num_nodes;i++) printf("%d: %d %d %d\n", i, a[i][0], a[i][1], a[i][2]);
+	//printf("Final config after %d swaps\nSet A:\n", num_swaps);
+	//for(i=0;i<num_nodes;i++) printf("%d: %d %d %d\n", i, a[i][0], a[i][1], a[i][2]);
 
-	printf("Set B:\n");
-	for(i=0;i<num_nodes;i++) printf("%d: %d %d %d\n", i, b[i][0], b[i][1], b[i][2]);
+	//printf("Set B:\n");
+	//for(i=0;i<num_nodes;i++) printf("%d: %d %d %d\n", i, b[i][0], b[i][1], b[i][2]);
 
-	printf("Time to execute: %f\n", time_taken);
+	//printf("Time to execute: %f\n", time_taken);
 
 	// clean up time
 	for(i=0;i<num_nodes;i++){
@@ -118,134 +118,103 @@ int main(int argc, char *argv[]){
 
 void swap_alg(int num_nodes, int num_swaps, int **a, int **b){
 
-	int flag;
-	int i;
+	int flag, flag2;
+	int i, count;
 	int a_first, index_n1, index_n2;
+	int index1, index2, index3, index4;
 	int b_index1, b_index2;
 	int a_point1, a_point2;
 	int b_point1, b_point2;
-	int b_temp;
 
 // do required no of swaps
 	for(i=0;i<num_swaps;i++){
 
 		a_first = (rand())%num_nodes; // first point in a picked at random
 
-		index_n1 = rand()%3; // index of first neighbour
-		index_n2 = rand()%3; // index of sencond neighbour
-		while(index_n1 == index_n2)
-			index_n2 = rand()%3; // ensure indices don't match
 
-		// find points in set b connected to point 'index' in a
-		b_point1 = a[a_first][index_n1]; // point1 in b
-		b_point2 = a[a_first][index_n2]; // point2 in b
+		do {
+			count=0;
+			flag2=0;
 
-		printf("point in a picked:%d\npoints in b neighbouring: %d %d\n", a_first, b_point1, b_point2);
+			index_n1 = rand()%3; // index of first neighbour
+			index_n2 = rand()%3; // index of sencond neighbour
+			while(index_n1 == index_n2)
+				index_n2 = rand()%3; // ensure indices don't match
 
-		// find points in set a connected to points point1/2 
+			// find points in set b connected to point 'index' in a
+			b_point1 = a[a_first][index_n1]; // point1 in b
+			b_point2 = a[a_first][index_n2]; // point2 in b
 
-		do{
-			b_index1 = rand()%3; // neighbour index for first point in b to get point in a
-			b_index2 = rand()%3; // same for second point
+			printf("point in A picked:%d\npoints in B neighbouring: %d %d\n", a_first, b_point1, b_point2);
+			printf("b1 %d, a_first %d, index_n1 %d\n", b_point1, a_first, index_n1);
+			index1=0;
+			index2=0;
 
-			while(b[b_point1][b_index1] == b[b_point2][b_index2])
-				b_index1 = rand()%3;
-	
-			//while(b[b_point2][b_index2] == a[a_first][index_n2])
-			//	b_index2 = rand()%3;
+			while(b[b_point1][index1] != a_first)
+				index1++;
+			while(b[b_point2][index2] != a_first)
+				index2++;
 
-			a_point1 = b[b_point1][b_index1];
-			a_point2 = b[b_point2][b_index2];
-		} while(a_point1 == a_first || a_point2 == a_first);
+			do{
+				flag=0;
+				count++;
+				b_index1 = rand()%3; // neighbour index for first point in b to get point in a
+				b_index2 = rand()%3; // same for second point
 
-			// ensure that the same point isn't picked twice in set a
-//			while(a_point1 == index || a_point2 == index || a_point2 == b[b_point1][(b_index1+1)%3] || a_point2 == b[b_point1][(b_index1+2)%3] || a_point1 == b[b_point2][(b_index2+1)%3] || a_point1 == b[b_point2][(b_index2+2)%3] ){
-	//			b_index1 = rand()%3;
-	//			b_index2 = rand()%3;
+				// ensure that we don't pick a_first
+				while(b_index1 == index1)
+					b_index1 = rand()%3;
 
-	//			while(b[b_point1][b_index1] == a[index][index2])
-		//			b_index1 = rand()%3;
+				while(b_index2 == index2)
+					b_index2 = rand()%3;
 
-			//	while(b[b_point2][b_index2] == a[index][index3])
-				//	b_index2 = rand()%3;
-	
 
-			//	a_point1 = b[b_point1][b_index1];
-			//	a_point2 = b[b_point2][b_index2];
+				if(b[b_point1][b_index1] == b[b_point2][b_index2]) // both are same point in a
+					flag=1;    
 
-				//for(i=0;i<3i++){
-					//if(a[
+				if(b[b_point1][b_index1] == b[b_point2][3-(index2+b_index2)]) // point1 is same as a neighbour of 2
+					flag=1;
 
-				//}
+				if(b[b_point2][b_index2] == b[b_point1][3-(index1+b_index1)])
+					flag=1;
 
-			//}
-		//}	
+				if(count>20)
+					flag2=1;
 
-		int index2, index3;
+			} while(flag==1);
+		//	printf("hello\n");
+		} while (flag2==1);
 
-		index2=0;
+		a_point1 = b[b_point1][b_index1];
+		a_point2 = b[b_point2][b_index2];
+
+
 		index3=0;
-		while(a[a_point1][index2] != b[b_point1][b_index1]) index2++;
-		while(a[a_point2][index3] != b[b_point2][b_index2]) index3++;
+		index4=0;
 
-		
+		//printf("this should be zero: %d %d\n", index3, index4);
 
-		b_temp = b[b_point2][b_index2];
-		a[a_point1][index2] = b[b_point2][b_index2];
-		a[a_point2][index3] = b[b_point1][b_index1];
+		//printf("a %d %d %d b %d, index3 %d\n",	a[a_point1][0], a[a_point1][1], a[a_point1][2], b[b_point1][b_index1], index3);
+
+		while(a[a_point1][index3] != b[b_point1][b_index1]){
+			//printf("a %d b %d, index3 %d\n",	a[a_point1][index3], b[b_point1][b_index1], index3);
+			index3++;
+		}
+//printf("a %d b %d, index3 %d\n",	a[a_point1][index3], b[b_point1][b_index1], index3);
+		while(a[a_point2][index4] != b[b_point2][b_index2])
+			index4++;
+
+	//printf("%d %d\n", index3, index4);
+
+		a[a_point1][index3] = b_point2;
+		a[a_point2][index4] = b_point1;
 
 		b[b_point2][b_index2] = a_point1;
 		b[b_point1][b_index1] = a_point2;
 
-		printf("points in a: %d %d\n", a_point1, a_point2);
+		//printf("points in a: %d %d\n", a_point1, a_point2);
 
 	}
-/*
-		flag=0;
-		while(flag==0){
-			// get indices of points to be swapped
-			index1_1=(rand())%num_nodes;
-			index2_1=rand()%num_nodes;
-			index1_2=rand()%3;
-			index2_2=rand()%3;
-	
-			// ensure that you aren't swapping a point with itself
-			if(index1_1==index2_1 && index1_2==index2_2){ flag=0;}
-			else{ flag=1;}
-	
-		
-			//printf("%d,%d and %d,%d\n", index1_1, index1_2, index2_1, index2_2); 
-
-			// do swap only if two points are to be swapped
-			if(flag==1){
-				// swap the points
-				temp=a[index1_1][index1_2];
-				a[index1_1][index1_2]=a[index2_1][index2_2];
-				a[index2_1][index2_2]=temp;
-	
-				for(i=0;i<3;i++){
-					printf("b %d  a %d\n", b[a[index1_1][index1_2]][i], index1_1);
-					if(b[a[index1_1][index1_2]][i]==index1_1) temp2=i;
-					
-				}
-				printf("%d\n", temp2);
-
-				// ensure the swap doesn't break the trivalent-bipartite nature
-				if(a[index1_1][index1_2] == a[index1_1][(index1_2+1)%3] || a[index1_1][index1_2] == a[index1_1][(index1_2+2)%3]){ flag=0;}
-				else if(a[index2_1][index2_2] == a[index2_1][(index2_2+1)%3] || a[index2_1][index2_2] == a[index2_1][(index2_2+2)%3]){ flag=0;}
-				else {flag = 1;}
-
-				// if it does then swap back
-				if(flag==0){
-					temp=a[index1_1][index1_2];
-					a[index1_1][index1_2]=a[index2_1][index2_2];
-					a[index2_1][index2_2]=temp;
-				}
-			}
-		}
-	}
-*/
-
 }
 
 void reverse_engineer(int ** in, int ** out, int num_nodes){
@@ -268,13 +237,4 @@ void reverse_engineer(int ** in, int ** out, int num_nodes){
 			out[index][k]=i;
 		}
 	}
-/*
-	for(i=0;i<num_nodes;i++){
-		printf("%d: ", i);
-		for(j=0;j<3;j++){
-			printf("%d ", out[i][j]);
-		}
-	printf("\n");
-	}
-*/
 }
