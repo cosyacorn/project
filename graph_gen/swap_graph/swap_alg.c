@@ -79,11 +79,11 @@ int main(int argc, char *argv[]){
 	reverse_engineer(a, b, num_nodes);
 
 	// print initial config
-	//printf("Initial config\nSet A:\n");
-	//for(i=0;i<num_nodes;i++) printf("%d: %d %d %d\n", i, a[i][0], a[i][1], a[i][2]);
+	printf("Initial config\nSet A:\n");
+	for(i=0;i<num_nodes;i++) printf("%d: %d %d %d\n", i, a[i][0], a[i][1], a[i][2]);
 
-	//printf("Set B:\n");
-	//for(i=0;i<num_nodes;i++) printf("%d: %d %d %d\n", i, b[i][0], b[i][1], b[i][2]);
+	printf("Set B:\n");
+	for(i=0;i<num_nodes;i++) printf("%d: %d %d %d\n", i, b[i][0], b[i][1], b[i][2]);
 
 
 	swap_alg(num_nodes, num_swaps, a, b);
@@ -95,11 +95,11 @@ int main(int argc, char *argv[]){
 	time_taken = (double)(end - begin)/CLOCKS_PER_SEC;
 
 	// print final config
-	//printf("Final config after %d swaps\nSet A:\n", num_swaps);
-	//for(i=0;i<num_nodes;i++) printf("%d: %d %d %d\n", i, a[i][0], a[i][1], a[i][2]);
+	printf("Final config after %d swaps\nSet A:\n", num_swaps);
+	for(i=0;i<num_nodes;i++) printf("%d: %d %d %d\n", i, a[i][0], a[i][1], a[i][2]);
 
-	//printf("Set B:\n");
-	//for(i=0;i<num_nodes;i++) printf("%d: %d %d %d\n", i, b[i][0], b[i][1], b[i][2]);
+	printf("Set B:\n");
+	for(i=0;i<num_nodes;i++) printf("%d: %d %d %d\n", i, b[i][0], b[i][1], b[i][2]);
 
 	//printf("Time to execute: %f\n", time_taken);
 
@@ -146,14 +146,18 @@ void swap_alg(int num_nodes, int num_swaps, int **a, int **b){
 			b_point2 = a[a_first][index_n2]; // point2 in b
 
 			printf("point in A picked:%d\npoints in B neighbouring: %d %d\n", a_first, b_point1, b_point2);
-			printf("b1 %d, a_first %d, index_n1 %d\n", b_point1, a_first, index_n1);
+			//printf("b1 %d, a_first %d, index_n1 %d\n", b_point1, a_first, index_n1);
 			index1=0;
 			index2=0;
+
+			//printf("point b %d %d %d a %d\n", b[b_point1][0], b[b_point1][1], b[b_point1][2], a_first);
 
 			while(b[b_point1][index1] != a_first)
 				index1++;
 			while(b[b_point2][index2] != a_first)
 				index2++;
+
+			//printf("%d %d\n", index1, index2);
 
 			do{
 				flag=0;
