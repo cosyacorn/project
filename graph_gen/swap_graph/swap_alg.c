@@ -192,6 +192,7 @@ void swap_alg(int num_nodes, int num_swaps, int **a, int **b){
 		a_point1 = b[b_point1][b_index1];
 		a_point2 = b[b_point2][b_index2];
 
+		printf("points in A: %d %d\n", a_point1, a_point2);
 
 		index3=0;
 		index4=0;
@@ -200,12 +201,12 @@ void swap_alg(int num_nodes, int num_swaps, int **a, int **b){
 
 		//printf("a %d %d %d b %d, index3 %d\n",	a[a_point1][0], a[a_point1][1], a[a_point1][2], b[b_point1][b_index1], index3);
 
-		while(a[a_point1][index3] != b[b_point1][b_index1]){
+		while(a[a_point1][index3] != b_point1){
 			//printf("a %d b %d, index3 %d\n",	a[a_point1][index3], b[b_point1][b_index1], index3);
 			index3++;
 		}
-//printf("a %d b %d, index3 %d\n",	a[a_point1][index3], b[b_point1][b_index1], index3);
-		while(a[a_point2][index4] != b[b_point2][b_index2])
+printf("a %d b %d, index3 %d\n",	a[a_point1][index3], b_point1, index3);
+		while(a[a_point2][index4] != b_point2)
 			index4++;
 
 	//printf("%d %d\n", index3, index4);

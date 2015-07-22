@@ -164,7 +164,7 @@ void send_boundary_data(Field* f, Array* a){
 
 
 //	MPI_Waitall(2, comm->send, comm->send_status);
-//	MPI_Waitall(2, comm->recv, comm->recv_status);
+	MPI_Waitall(comm->recv_count[host.rank], comm->recv, comm->recv_status);
 
 //	unpack(f, a, comm);
 
