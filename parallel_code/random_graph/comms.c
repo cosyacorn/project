@@ -8,10 +8,10 @@
 // =======================================
 // Only use this structure inside this file 
 typedef struct {
-	MPI_Request send[2];
-	MPI_Status  send_status[2];
-	MPI_Request recv[2]; 
-	MPI_Status  recv_status[2];
+	MPI_Request *send;
+	MPI_Status  *send_status;
+	MPI_Request *recv;
+	MPI_Status  *recv_status;
 
 	int **buffer_send;
 	int **buffer_recv;
@@ -47,11 +47,11 @@ static void send(Field* f, Array* a, BoundaryComm* c){
 		for(j=0;j<host.np;j++){
 			if(host.rank==i && i!=j){
 				pprintf("sending %d elements\n", c->send_count[j]);
-				MPI_Isend(c->buffer_send[j], c->send_count[j], MPI_INT, j, 1,MPI_COMM_WORLD, c->send);
+				MPI_Isend(c->buffer_send[j], c->send_count[j], MPI_INT, j, 1,MPI_COMM_WORLD, c->send+j);
 				//pprintf("send count[%d] = %d\n",j, c->send_count[j]);
 			}
 			if(host.rank==j && i!=j){
-				MPI_Irecv(c->buffer_recv[i], c->recv_count[i], MPI_INT, i, 1,MPI_COMM_WORLD, c->recv);
+				MPI_Irecv(c->buffer_recv[i], c->recv_count[i], MPI_INT, i, 1,MPI_COMM_WORLD, c->recv+i );
 				pprintf("recveiving %d elements.. %d\n", c->recv_count[i], c->buffer_recv[i][0]);
 			}
 		}
@@ -69,6 +69,52 @@ static void send(Field* f, Array* a, BoundaryComm* c){
 
 	printf("done\n");*/
 }
+
+static void blocking_send(Field* f, Array* a, BoundaryComm* c){
+
+	int i, j, *k;
+
+	k = (int *) malloc(sizeof(int) * host.np);
+
+	for(i=0;i<host.np;i++) k[i]=0;
+
+	// copy to buffer
+	for(i=0;i<a->x_local;i++){
+		for(j=0;j<3;j++){
+			if(a->neighbour[i][j] < host.rank*a->x_local || a->neighbour[i][j] >= (host.rank+1)*a->x_local){
+				c->buffer_send[a->neighbour[i][j]/a->x_local][k[a->neighbour[i][j]/a->x_local]] = f->value[i];
+				k[a->neighbour[i][j]/a->x_local]++;
+			}
+		}
+	}
+
+	for(i=0;i<host.np;i++){
+		for(j=0;j<host.np;j++){
+			if(host.rank==i && i!=j){
+				pprintf("sending %d elements\n", c->send_count[j]);
+				MPI_Send(c->buffer_send[j], c->send_count[j], MPI_INT, j, 1,MPI_COMM_WORLD, c->send+j);
+				//pprintf("send count[%d] = %d\n",j, c->send_count[j]);
+			}
+			if(host.rank==j && i!=j){
+				MPI_Irecv(c->buffer_recv[i], c->recv_count[i], MPI_INT, i, 1,MPI_COMM_WORLD, c->recv+i );
+				pprintf("recveiving %d elements.. %d\n", c->recv_count[i], c->buffer_recv[i][0]);
+			}
+		}
+	}
+
+	/*if(host.rank==0){
+		for(i=0;i<host.np;i++){
+			printf("%d\n", c->send_count[i]);
+			for(j=0;j<c->send_count[i];j++){
+				//printf("%d ", c->buffer_send[i][j]);
+			}
+			//printf("\n");
+		}
+	}
+
+	printf("done\n");*/
+}
+
 
 static void unpack(Field* f, Array* a, BoundaryComm* c){
 
@@ -91,6 +137,12 @@ static BoundaryComm* init_comm(Array* a){
 
 	int i, j;
 	BoundaryComm *c = malloc(sizeof(BoundaryComm));
+
+	c->send = (MPI_Request *) malloc(sizeof(MPI_Request) * (host.np-1));
+	c->send_status = (MPI_Status *) malloc(sizeof(MPI_Status) * (host.np-1));
+
+	c->recv = (MPI_Request *) malloc(sizeof(MPI_Request) * (host.np-1));
+	c->recv_status = (MPI_Status *) malloc(sizeof(MPI_Status) * (host.np-1));
 
 	c->send_count = (int *) malloc(sizeof(int) * host.np);
 	c->recv_count = (int *) malloc(sizeof(int) * host.np);
@@ -143,6 +195,12 @@ static void free_comm(BoundaryComm* c){
 		free(c->buffer_recv[i]);
 	}
 
+	free(c->send);
+	free(c->send_status);
+
+	free(c->recv);
+	free(c->recv_status);
+
 	free(c->buffer_send);
 	free(c->buffer_recv);
 
@@ -163,10 +221,10 @@ void send_boundary_data(Field* f, Array* a){
 	send(f, a, comm);
 
 
-//	MPI_Waitall(2, comm->send, comm->send_status);
-	MPI_Waitall(comm->recv_count[host.rank], comm->recv, comm->recv_status);
+	MPI_Waitall(host.rank-1, comm->send, comm->send_status);
+	MPI_Waitall(host.rank-1, comm->recv, comm->recv_status);
 
-//	unpack(f, a, comm);
+	unpack(f, a, comm);
 
 	free_comm(comm);
 }
