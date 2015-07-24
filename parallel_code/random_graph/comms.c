@@ -24,7 +24,7 @@ typedef struct {
 
 
 
-// Don't call these outside this file... 
+// Only visible inside this file
 static void send(Field* f, Array* a, BoundaryComm* c){
 
 	int i, j, *k;
@@ -91,13 +91,14 @@ static void blocking_send(Field* f, Array* a, BoundaryComm* c){
 	for(i=0;i<host.np;i++){
 		for(j=0;j<host.np;j++){
 			if(host.rank==i && i!=j){
-				pprintf("sending %d elements\n", c->send_count[j]);
-				MPI_Send(c->buffer_send[j], c->send_count[j], MPI_INT, j, 1,MPI_COMM_WORLD, c->send+j);
+				//pprintf("sending %d elements\n", c->send_count[j]);
+				MPI_Send(c->buffer_send[j], c->send_count[j], MPI_INT, j, 1,MPI_COMM_WORLD);
 				//pprintf("send count[%d] = %d\n",j, c->send_count[j]);
 			}
 			if(host.rank==j && i!=j){
-				MPI_Irecv(c->buffer_recv[i], c->recv_count[i], MPI_INT, i, 1,MPI_COMM_WORLD, c->recv+i );
-				pprintf("recveiving %d elements.. %d\n", c->recv_count[i], c->buffer_recv[i][0]);
+				pprintf("%d helle %d\n", i, c->recv_count[0]);
+				MPI_Recv(c->buffer_recv[i], c->recv_count[i], MPI_INT, i, 1,MPI_COMM_WORLD, c->recv_status );
+				pprintf("recveiving %d elements.. %d\n", c->recv_count[i], c->buffer_recv[i][1]);
 			}
 		}
 	}
@@ -174,7 +175,7 @@ static BoundaryComm* init_comm(Array* a){
 		}
 	}
 
-	//pprintf("recv_count[0] = %d recv_count[1] = %d\n", c->recv_count[0], c->recv_count[1]);
+	pprintf("recv_count[0] = %d recv_count[1] = %d\n", c->recv_count[0], c->recv_count[1]);
 
 	c->buffer_recv = (int **) malloc(sizeof(int *) * host.np);
 	for(i=0;i<host.np;i++){
@@ -210,19 +211,19 @@ static void free_comm(BoundaryComm* c){
 	free(c);
 }
 
-// ------------------------------------------------------------
-//        Externally visible functions:
-// ------------------------------------------------------------
+
+// Can be called from outside file
+
 
 void send_boundary_data(Field* f, Array* a){
 
 	BoundaryComm* comm = init_comm(a);
 
-	send(f, a, comm);
+	blocking_send(f, a, comm);
 
 
-	MPI_Waitall(host.rank-1, comm->send, comm->send_status);
-	MPI_Waitall(host.rank-1, comm->recv, comm->recv_status);
+	//MPI_Waitall(host.rank-1, comm->send, comm->send_status);
+	//MPI_Waitall(host.rank-1, comm->recv, comm->recv_status);
 
 	unpack(f, a, comm);
 
