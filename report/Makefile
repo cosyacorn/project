@@ -1,8 +1,13 @@
 LATEX = pdflatex
 
+all: report double-ring
+
 report: report.tex
 	$(LATEX) report.tex
 
+double-ring: double_ring.tex
+	$(LATEX) double_ring.tex
+
 .PHONY: clean
 clean:
-	$(RM) report.aux report.log report.log report.out
+	$(RM) *.aux *.log *.out

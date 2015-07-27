@@ -1,0 +1,89 @@
+\documentclass[fleqn]{article}
+\usepackage{amsmath}
+
+
+\title{Double Ring Ising model}
+\author{Shane Harding}
+
+\date{\today}
+
+
+\begin{document}
+\maketitle
+
+Define the 4 possible spins as $s_i$ where
+
+\[ s_i \in \left\{ \left( \begin{array}{c} +1 \\ +1 \end{array} \right),
+\left( \begin{array}{c} +1 \\ -1 \end{array} \right),
+\left( \begin{array}{c} -1 \\ +1 \end{array} \right),
+\left( \begin{array}{c} -1 \\ -1 \end{array} \right) \right\} \]
+
+The Hamiltonian is given by:
+
+\[ H = -J \sum_{\langle i, j \rangle} s_i \cdot s_j \]
+
+we set $J=1$ for simplicity and take the dot product of the two spin vectors. The partition function, $Z$, is given by the trace of the matrix $P$ which has entries $e^{H(s_i, s_j)}$ for all possible combinations of $s_i, s_j$.
+
+\begin{align}
+P &=& \left( \begin{array}{cccc} e^{-2 \beta} & e^0 & e^0 & e^{2 \beta} \\
+e^0 & e^{-2 \beta} & e^{2 \beta} & e^0 \\
+e^0 & e^{2 \beta} & e^{-2 \beta} & e^0 \\
+e^{2 \beta} & e^0 & e^0 & e^{-2 \beta} \end{array} \right) \\
+%%%
+&=& \left( \begin{array}{cccc} e^{-2 \beta} & 1 & 1 & e^{2 \beta} \\
+1 & e^{-2 \beta} & e^{2 \beta} & 1 \\
+1 & e^{2 \beta} & e^{-2 \beta} & 1 \\
+e^{2 \beta} & 1 & 1 & e^{-2 \beta} \end{array} \right) \\
+\end{align}
+
+Now find the eigenvalues.. $det(P-\lambda I)$.
+
+\begin{eqnarray}
+\left| \begin{array}{cccc} e^{-2 \beta} - \lambda & 1 & 1 & e^{2 \beta} \\
+1 & e^{-2 \beta} - \lambda & e^{2 \beta} & 1 \\
+1 & e^{2 \beta} & e^{-2 \beta} - \lambda & 1 \\
+e^{2 \beta} & 1 & 1 & e^{-2 \beta} - \lambda \end{array} \right| \\
+\end{eqnarray}
+
+\begin{eqnarray}
+= (e^{-2 \beta} - \lambda) \left| \begin{array}{ccc} e^{-2 \beta} - \lambda & e^{2 \beta} & 1  \\
+e^{2 \beta} & e^{-2 \beta} - \lambda & 1 \\
+1 & 1 & e^{-2 \beta} - \lambda  \end{array} \right| 
+%%
+- \left| \begin{array}{ccc} 1 & e^{2 \beta} & 1 \\
+1 & e^{-2 \beta} - \lambda & 1 \\
+e^{2 \beta} & 1 & e^{-2 \beta} - \lambda  \end{array} \right| \\
+%%
++ \left| \begin{array}{ccc} 1 & e^{-2 \beta} - \lambda & 1 \\
+1 & e^{2 \beta} & 1 \\
+e^{2 \beta} & 1 & e^{-2 \beta} - \lambda  \end{array} \right| 
+%%
+-e^{2 \beta} \left| \begin{array}{ccc} 1 & e^{-2 \beta} - \lambda & e^{2 \beta} \\
+1 & e^{2 \beta} & e^{-2 \beta} - \lambda \\
+e^{2 \beta} & 1 & 1  \end{array} \right| \\
+%%%%%%%%%%
+= (e^{-2 \beta} - \lambda) \left[ (e^{-2 \beta} - \lambda) \left( (e^{-2 \beta} - \lambda)^2 - 1 \right) - e^{2 \beta} \left( e^{2 \beta} (e^{-2 \beta} - \lambda) - 1 \right) + (e^{2 \beta} - (e^{-2 \beta} - \lambda) ) \right] \\
+%%
+- \left[ \left( (e^{-2 \beta} - \lambda)^2 -1 \right) - \left( e^{2 \beta} (e^{-2 \beta} - \lambda) - 1 \right) + e^{2 \beta} \left( e^{2 \beta} - (e^{-2 \beta} - \lambda) \right) \right] \\
+%%
+ + \left[ e^{2 \beta} \left( (e^{-2 \beta} - \lambda) - 1 \right) - \left( (e^{-2 \beta} - \lambda)^2 -1 \right) + e^{2 \beta} \left( (e^{-2 \beta} - \lambda) - e^{2 \beta} \right) \right] \\
+%%
+- e^{2 \beta} \left[ \left( e^{2 \beta} - (e^{-2 \beta} - \lambda) \right) - \left( (e^{-2 \beta} - \lambda) - e^{2 \beta} \right) + e^{2 \beta} \left( (e^{-2 \beta} - \lambda)^2 - e^{4 \beta} \right) \right] \\
+%%%%%%%%%
+= (e^{-2 \beta} - \lambda) \left[ (e^{-2 \beta} - \lambda)^3 - (e^{-2 \beta} - \lambda) - e^{4 \beta} (e^{-2 \beta} - \lambda) + e^{2 \beta} + e^{2 \beta} - (e^{-2 \beta} - \lambda) \right] \\
+%%
+- \left[ (e^{-2 \beta} - \lambda) -1 -e^{2 \beta} (e^{-2 \beta} - \lambda) +1 - e^{2 \beta} (e^{-2 \beta} - \lambda) + e^{4 \beta} \right] \\
+%%
++ \left[ e^{2 \beta} (e^{-2 \beta} - \lambda) - e^{2 \beta} - (e^{-2 \beta} - \lambda)^2 + 1 + e^{2 \beta} (e^{-2 \beta} - \lambda) - e^{4 \beta} \right] \\
+%%
+- e^{2 \beta} \left[ e^{2 \beta} - (e^{-2 \beta} - \lambda) - (e^{-2 \beta} - \lambda) + e^{2 \beta} + e^{2 \beta} (e^{-2 \beta} - \lambda) - e^{6 \beta} \right] \\
+%%%%%%%%
+= (e^{-2 \beta} - \lambda)^4 - 2 (e^{-2 \beta} - \lambda)^2 - e^{4 \beta}(e^{-2 \beta} - \lambda)^2 + 2 e^{2 \beta} (e^{-2 \beta} - \lambda) - (e^{-2 \beta} - \lambda)^2 \\
+ + 2 e^{2 \beta} (e^{-2 \beta} - \lambda) - e^{4 \beta} + 2 e^{2 \beta} (e^{-2 \beta} - \lambda) - (e^{-2 \beta} - \lambda)^2 \\
+-e^{2 \beta} +1 -2 e^{4 \beta} - e^{4 \beta} + 2 e^{2 \beta} (e^{-2 \beta} - \lambda) - e^{4 \beta} (e^{-2 \beta} - \lambda)^2 + e^{8 \beta}
+\end{eqnarray}
+
+
+
+
+\end{document}
