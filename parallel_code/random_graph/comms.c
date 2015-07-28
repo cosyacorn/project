@@ -33,50 +33,8 @@ static void send(Field* f, Array* a, BoundaryComm* c){
 
 	for(i=0;i<host.np;i++) k[i]=0;
 
-	// copy to buffer
-	for(i=0;i<a->x_local;i++){
-		for(j=0;j<3;j++){
-			if(a->neighbour[i][j] < host.rank*a->x_local || a->neighbour[i][j] >= (host.rank+1)*a->x_local){
-				c->buffer_send[a->neighbour[i][j]/a->x_local][k[a->neighbour[i][j]/a->x_local]] = f->value[i];
-				k[a->neighbour[i][j]/a->x_local]++;
-			}
-		}
-	}
-
-	for(i=0;i<host.np;i++){
-		for(j=0;j<host.np;j++){
-			if(host.rank==i && i!=j){
-				pprintf("sending %d elements\n", c->send_count[j]);
-				MPI_Isend(c->buffer_send[j], c->send_count[j], MPI_INT, j, 1,MPI_COMM_WORLD, c->send+j);
-				//pprintf("send count[%d] = %d\n",j, c->send_count[j]);
-			}
-			if(host.rank==j && i!=j){
-				MPI_Irecv(c->buffer_recv[i], c->recv_count[i], MPI_INT, i, 1,MPI_COMM_WORLD, c->recv+i );
-				pprintf("recveiving %d elements.. %d\n", c->recv_count[i], c->buffer_recv[i][0]);
-			}
-		}
-	}
-
-	/*if(host.rank==0){
-		for(i=0;i<host.np;i++){
-			printf("%d\n", c->send_count[i]);
-			for(j=0;j<c->send_count[i];j++){
-				//printf("%d ", c->buffer_send[i][j]);
-			}
-			//printf("\n");
-		}
-	}
-
-	printf("done\n");*/
-}
-
-static void blocking_send(Field* f, Array* a, BoundaryComm* c){
-
-	int i, j, *k;
-
-	k = (int *) malloc(sizeof(int) * host.np);
-
-	for(i=0;i<host.np;i++) k[i]=0;
+	MPI_Request * send_ptr = c->send;
+	MPI_Request * recv_ptr = c->recv;
 
 	// copy to buffer
 	for(i=0;i<a->x_local;i++){
@@ -89,32 +47,22 @@ static void blocking_send(Field* f, Array* a, BoundaryComm* c){
 	}
 
 	for(i=0;i<host.np;i++){
-		for(j=0;j<host.np;j++){
-			if(host.rank==i && i!=j){
-				//pprintf("sending %d elements\n", c->send_count[j]);
-				MPI_Send(c->buffer_send[j], c->send_count[j], MPI_INT, j, 1,MPI_COMM_WORLD);
-				//pprintf("send count[%d] = %d\n",j, c->send_count[j]);
-			}
-			if(host.rank==j && i!=j){
-				pprintf("%d helle %d\n", i, c->recv_count[0]);
-				MPI_Recv(c->buffer_recv[i], c->recv_count[i], MPI_INT, i, 1,MPI_COMM_WORLD, c->recv_status );
-				pprintf("recveiving %d elements.. %d\n", c->recv_count[i], c->buffer_recv[i][1]);
-			}
+		if(host.rank !=i){
+			MPI_Isend(c->buffer_send[i], c->send_count[i], MPI_INT, i, 100*host.rank, MPI_COMM_WORLD, send_ptr);
+			send_ptr++;
+			MPI_Irecv(c->buffer_recv[i], c->recv_count[i], MPI_INT, i, 100*i, MPI_COMM_WORLD, recv_ptr);
+			recv_ptr++;
 		}
 	}
 
-	/*if(host.rank==0){
-		for(i=0;i<host.np;i++){
-			printf("%d\n", c->send_count[i]);
-			for(j=0;j<c->send_count[i];j++){
-				//printf("%d ", c->buffer_send[i][j]);
-			}
-			//printf("\n");
-		}
-	}
+	MPI_Waitall(host.np-1, c->send, c->send_status);
+	MPI_Waitall(host.np-1, c->recv, c->recv_status);
 
-	printf("done\n");*/
+	pprintf("%d %d\n",c->buffer_recv[0][0], c->buffer_recv[0][1]);
+
+
 }
+
 
 
 static void unpack(Field* f, Array* a, BoundaryComm* c){
@@ -123,12 +71,12 @@ static void unpack(Field* f, Array* a, BoundaryComm* c){
 
 	for(i=0;i<host.np;i++){
 		for(j=0;j<c->recv_count[i];j++){
-			//if(i != j)
-				//f->halo[i][j] = c->buffer_recv[i][j];
+			if(i != j)
+				f->halo[i][j] = c->buffer_recv[i][j];
 		}
 	}
 
-	//pprintf("halo %d buff %d\n", f->halo[0][0], c->buffer_recv[0][0]);
+//	pprintf("halo %d buff %d\n", f->halo[0][0], c->buffer_recv[1][0]);
 
 }
 
@@ -139,16 +87,28 @@ static BoundaryComm* init_comm(Array* a){
 	int i, j;
 	BoundaryComm *c = malloc(sizeof(BoundaryComm));
 
-	c->send = (MPI_Request *) malloc(sizeof(MPI_Request) * (host.np-1));
-	c->send_status = (MPI_Status *) malloc(sizeof(MPI_Status) * (host.np-1));
-
-	c->recv = (MPI_Request *) malloc(sizeof(MPI_Request) * (host.np-1));
-	c->recv_status = (MPI_Status *) malloc(sizeof(MPI_Status) * (host.np-1));
-
 	c->send_count = (int *) malloc(sizeof(int) * host.np);
 	c->recv_count = (int *) malloc(sizeof(int) * host.np);
 
-	for(i=0;i<host.np;i++) c->send_count[i]=0;
+	c->send = (MPI_Request *) malloc(sizeof(MPI_Request) * (host.np-1));
+	c->recv = (MPI_Request *) malloc(sizeof(MPI_Request) * (host.np-1));
+
+	c->send_status = (MPI_Status *) malloc(sizeof(MPI_Status) * (host.np-1));
+	c->recv_status = (MPI_Status *) malloc(sizeof(MPI_Status) * (host.np-1));
+
+	MPI_Request * send = (MPI_Request *) malloc(sizeof(MPI_Request) * (host.np-1));
+	MPI_Request * recv = (MPI_Request *) malloc(sizeof(MPI_Request) * (host.np-1));
+
+	MPI_Status * send_status = (MPI_Status *) malloc(sizeof(MPI_Status) * (host.np-1));
+	MPI_Status * recv_status = (MPI_Status *) malloc(sizeof(MPI_Status) * (host.np-1));
+
+	MPI_Request * send_ptr = send;
+	MPI_Request * recv_ptr = recv; 
+
+	for(i=0;i<host.np;i++)
+		c->send_count[i]=0;
+	for(i=0;i<host.np;i++)
+		c->recv_count[i]=0;
 
 	//determine how many to be sent to each process
 
@@ -162,26 +122,32 @@ static BoundaryComm* init_comm(Array* a){
 	}
 
 	c->buffer_send = (int **) malloc(sizeof(int *) * host.np);
+
 	for(i=0;i<host.np;i++){
 		c->buffer_send[i] = (int *) malloc(sizeof(int) * c->send_count[i]);
 	}
 
-	MPI_Barrier(MPI_COMM_WORLD);
-
 	for(i=0;i<host.np;i++){
-		for(j=0;j<host.np;j++){
-			MPI_Isend(&c->send_count[i], 1, MPI_INT, j, 1,MPI_COMM_WORLD, c->send);
-			MPI_Irecv(&c->recv_count[j], 1, MPI_INT, i, 1,MPI_COMM_WORLD, c->recv);
+		if(host.rank != i){
+			MPI_Isend(&c->send_count[i], 1, MPI_INT, i, 100*host.rank, MPI_COMM_WORLD, send_ptr);
+			send_ptr++;
+			MPI_Irecv(&c->recv_count[i], 1, MPI_INT, i, 100*i, MPI_COMM_WORLD, recv_ptr);
+			recv_ptr++;
 		}
 	}
 
-	pprintf("recv_count[0] = %d recv_count[1] = %d\n", c->recv_count[0], c->recv_count[1]);
+	MPI_Waitall(host.np-1, send, send_status);
+	MPI_Waitall(host.np-1, recv, recv_status);
 
 	c->buffer_recv = (int **) malloc(sizeof(int *) * host.np);
 	for(i=0;i<host.np;i++){
 		c->buffer_recv[i] = (int *) malloc(sizeof(int) * c->recv_count[i]);
 	}
 
+	free(send);
+	free(send_status);
+	free(recv);
+	free(recv_status);
 
 	return c; 
 }
@@ -219,11 +185,7 @@ void send_boundary_data(Field* f, Array* a){
 
 	BoundaryComm* comm = init_comm(a);
 
-	blocking_send(f, a, comm);
-
-
-	//MPI_Waitall(host.rank-1, comm->send, comm->send_status);
-	//MPI_Waitall(host.rank-1, comm->recv, comm->recv_status);
+	send(f, a, comm);
 
 	unpack(f, a, comm);
 

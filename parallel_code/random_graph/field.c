@@ -19,7 +19,6 @@ Field * init_field(Array * a){
 
 	for(i=0;i<size;i++){
 		d = drand48();
-		//pprintf("%f\n", d);
 		if(d>0.5) f->value[i] = 1;
 		else f->value[i] = -1;
 	}
