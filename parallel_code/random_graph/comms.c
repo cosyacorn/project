@@ -58,9 +58,7 @@ static void send(Field* f, Array* a, BoundaryComm* c){
 	MPI_Waitall(host.np-1, c->send, c->send_status);
 	MPI_Waitall(host.np-1, c->recv, c->recv_status);
 
-	pprintf("%d %d\n",c->buffer_recv[0][0], c->buffer_recv[0][1]);
-
-
+	free(k);
 }
 
 
@@ -71,13 +69,9 @@ static void unpack(Field* f, Array* a, BoundaryComm* c){
 
 	for(i=0;i<host.np;i++){
 		for(j=0;j<c->recv_count[i];j++){
-			if(i != j)
 				f->halo[i][j] = c->buffer_recv[i][j];
 		}
 	}
-
-//	pprintf("halo %d buff %d\n", f->halo[0][0], c->buffer_recv[1][0]);
-
 }
 
 
@@ -190,4 +184,5 @@ void send_boundary_data(Field* f, Array* a){
 	unpack(f, a, comm);
 
 	free_comm(comm);
+	pprintf("did this break?\n");
 }

@@ -18,7 +18,7 @@ int main(int argc, char * argv[]){
 	Array *a, *b;
 	Field *f_a, *f_b;
 
-	num_nodes=4;
+	num_nodes=8;
 	beta=0.001;
 	num_updates=1;
 
@@ -26,11 +26,7 @@ int main(int argc, char * argv[]){
 
 	init_machine(argc,argv, num_nodes);
 
-
 	srand48(time(NULL)+host.rank);
-
-
-	//MPI_Barrier(MPI_COMM_WORLD);
 
 	a_graph = make_graph(num_nodes);
 	b_graph = make_graph(num_nodes);
@@ -40,34 +36,30 @@ int main(int argc, char * argv[]){
 	a = init_array(size, a_graph);
 	b = init_array(size, b_graph);	
 
-	//pprintf("%d\n", a->neighbour[1][1]);
-
 	f_a = init_field(a);
 	f_b = init_field(b);
 	
-	for(i=0;i<size;i++)
+	send_boundary_data(f_a, a);
+	send_boundary_data(f_b, b);
+
+	//for(i=0;i<size;i++)
 	//	pprintf("%d\n", f_a->value[i]);
 
-	MPI_Barrier(MPI_COMM_WORLD);
 
-
-
-/*
 	t1 = MPI_Wtime();
+
 
 	//for(beta=0.01;beta<1.00;beta+=0.01){
 		avg=0.0;
 		for(i=0;i<num_updates;i++){
 			update(size, f_a, f_b, beta, a, b);
-			send_boundary_data(f_a, a);
-			//send_boundary_data(f_b, b);
 			avg += magnetisation(f_a,a) + magnetisation(f_b,b);
 		}
 
-		//pprintf("%Zbeta: %lf; avg magnetisation: %lf\n",beta,avg/(double) num_updates);
+		pprintf("%Zbeta: %lf; avg magnetisation: %lf\n",beta,avg/(double) num_updates);
 	//}
-*/
-	/*for(beta=1.00;beta>0.00;beta-=0.01){
+/*
+	for(beta=1.00;beta>0.00;beta-=0.01){
 		avg=0.0;
 		for(i=0;i<num_updates;i++){
 			update(size, f_a, f_b, beta, a, b);
@@ -78,15 +70,14 @@ int main(int argc, char * argv[]){
 	
 		t2 = MPI_Wtime();
 
-		pprintf("%Zbeta: %lf; avg magnetisation: %lf\n",beta,avg/(double) num_updates);
-	}*/
-
-	send_boundary_data(f_a, a);
+		//pprintf("%Zbeta: %lf; avg magnetisation: %lf\n",beta,avg/(double) num_updates);
+	}
+*/
 
 	//pprintf("halo %d\n", f_a->halo[0][0]);
-//	t2 = MPI_Wtime();
+	t2 = MPI_Wtime();
 
-	//pprintf("%Ztotal time taken: %lf\n", t2-t1);
+	pprintf("%Ztotal time taken: %lf\n", t2-t1);
 
 	// write results to file
 /*	if(host.rank==0){

@@ -7,7 +7,7 @@ OBJS= machine.o array.o field.o comms.o helper_funcs.o
 
 # Run ising with (eg) mpirun -np 8 1000 1000 4 2 
 double_ring: main.c $(INCS) $(OBJS)
-	$(CC) $(CFLAGS) -o ring main.c $(OBJS) $(LIBS)
+	$(CC) $(CFLAGS) -o random_graph main.c $(OBJS) $(LIBS)
  
 machine.o: machine.c $(INCS)
 	$(CC) $(CFLAGS) -c machine.c
@@ -25,5 +25,5 @@ helper_funcs.o: helper_funcs.c $(INCS)
 	$(CC) $(CFLAGS) -c helper_funcs.c
 
 clean:
-	$(RM)  ring $(OBJS) 
+	$(RM)  random_graph $(OBJS) 
 

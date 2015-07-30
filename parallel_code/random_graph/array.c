@@ -27,22 +27,22 @@ void check_array(Array* a){
 }
 
 
-Array * init_array(int num_nodes, int **graph){
+Array * init_array(int num_local_nodes, int **graph){
 
 	int i, j;
 
 	Array * a = malloc(sizeof(Array));
-	a->x_local = num_nodes;
+	a->x_local = num_local_nodes;
 	a->x = a->x_local*host.np;
 	a->x_offset = host.rank;
 
-	a->neighbour = (int **) malloc(sizeof(int *)*num_nodes);
-	for(i=0;i<num_nodes;i++)
+	a->neighbour = (int **) malloc(sizeof(int *)*num_local_nodes);
+	for(i=0;i<num_local_nodes;i++)
 		a->neighbour[i] = (int *) malloc(sizeof(int)*3);
 
-	for(i=0;i<num_nodes;i++){
+	for(i=0;i<num_local_nodes;i++){
 		for(j=0;j<3;j++){
-			a->neighbour[i][j]=graph[host.rank*num_nodes+i][j];
+			a->neighbour[i][j]=graph[host.rank*num_local_nodes+i][j];
 		}
 	}
 	check_array(a);
