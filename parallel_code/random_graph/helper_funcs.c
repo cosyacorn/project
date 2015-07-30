@@ -88,16 +88,16 @@ void update_one_field(int size, Field *f_a, Field *f_b, double beta, Array *a){
 
 	for(i=0;i<size;i++){
 		for(j=0;j<3;j++){
-			if(a->neighbour[i][j] <= host.rank*size || a->neighbour[i][j] > (host.rank+1)*size){
+			if(a->neighbour[i][j] < host.rank*size || a->neighbour[i][j] >= (host.rank+1)*size){
 				// set spin1 to halo
 				k=0;				
-				index[j]=a->neighbour[i][j]/size;
+				index[j] = a->neighbour[i][j]/size;
 				while(f_b->halo[index[j]][k] == 0){
 					k++;
-
 				}
 				spin[j] = f_b->halo[index[j]][k];
 				f_b->halo[index[j]][k] = 0;
+
 			} else {
 				spin[j] = f_b->value[a->neighbour[i][j]];
 			}
@@ -116,7 +116,6 @@ void update_one_field(int size, Field *f_a, Field *f_b, double beta, Array *a){
 			if(r>=n) f_a->value[i] = prop;
 		}
 	}
-	pprintf("help\n");
 }
 
 // update the whole graph
@@ -135,8 +134,6 @@ double magnetisation(Field* phi, Array* a){
 
 	int x; 
 	int sum_local=0,sum_global;
-
-	pprintf("wer here\n");
 
 	for (x=0;x<a->x_local;x++)
 		sum_local += phi->value[x];

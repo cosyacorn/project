@@ -20,7 +20,7 @@ int main(int argc, char * argv[]){
 
 	num_nodes=100;
 	beta=0.001;
-	num_updates=1;
+	num_updates=100000;
 
 	MPI_Init(&argc,&argv);
 
@@ -51,7 +51,7 @@ int main(int argc, char * argv[]){
 			avg += magnetisation(f_a,a) + magnetisation(f_b,b);
 		}
 
-		//pprintf("%Zbeta: %lf; avg magnetisation: %lf\n",beta,avg/(double) num_updates);
+		pprintf("%Zbeta: %lf; avg magnetisation: %lf\n",beta,avg/(double) num_updates);
 	//}
 
 	/*for(beta=1.00;beta>0.00;beta-=0.01){
@@ -70,9 +70,9 @@ int main(int argc, char * argv[]){
 
 	t2 = MPI_Wtime();
 
-	//pprintf("%Ztotal time taken: %lf\n", t2-t1);
+	pprintf("%Ztotal time taken: %lf\n", t2-t1);
 
-	if(host.rank==0){
+/*	if(host.rank==0){
 
 		FILE* o;
 		char *filename = malloc(sizeof(char) * 15);
@@ -87,7 +87,7 @@ int main(int argc, char * argv[]){
 		fclose(o);
 		free(filename);
 	}
-
+*/
 	// clean up
 	free_array(a);
 	free_array(b);

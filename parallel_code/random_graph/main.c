@@ -18,9 +18,9 @@ int main(int argc, char * argv[]){
 	Array *a, *b;
 	Field *f_a, *f_b;
 
-	num_nodes=8;
+	num_nodes=100;
 	beta=0.001;
-	num_updates=1;
+	num_updates=100000;
 
 	MPI_Init(&argc,&argv);
 
@@ -41,10 +41,6 @@ int main(int argc, char * argv[]){
 	
 	send_boundary_data(f_a, a);
 	send_boundary_data(f_b, b);
-
-	//for(i=0;i<size;i++)
-	//	pprintf("%d\n", f_a->value[i]);
-
 
 	t1 = MPI_Wtime();
 
@@ -74,7 +70,6 @@ int main(int argc, char * argv[]){
 	}
 */
 
-	//pprintf("halo %d\n", f_a->halo[0][0]);
 	t2 = MPI_Wtime();
 
 	pprintf("%Ztotal time taken: %lf\n", t2-t1);
@@ -97,14 +92,15 @@ int main(int argc, char * argv[]){
 	}
 */
 	// clean up
+
+	free_field(f_a);
+	free_field(f_b);
+
 	free_array(a);
 	free_array(b);
 
 	free_graph(a_graph, num_nodes);
 	free_graph(b_graph, num_nodes);
-
-	free_field(f_a);
-	free_field(f_b);
 
 	// finish parallel
 	MPI_Finalize();

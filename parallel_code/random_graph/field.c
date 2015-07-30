@@ -56,8 +56,14 @@ Field * init_field(Array * a){
 
 void free_field(Field* f){
 
+	int i;
+
+	for(i=0;i<host.np;i++)
+		free(f->halo[i]);
+
 	free(f->halo);
 	free(f->value);
+	free(f->halo_count);
 	free(f);
 }
 

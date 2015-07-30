@@ -184,5 +184,4 @@ void send_boundary_data(Field* f, Array* a){
 	unpack(f, a, comm);
 
 	free_comm(comm);
-	pprintf("did this break?\n");
 }
