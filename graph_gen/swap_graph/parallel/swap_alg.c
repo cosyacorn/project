@@ -4,6 +4,7 @@
 #include<getopt.h>
 #include<time.h>
 #include<ctype.h>
+#include<mpi.h>
 
 void reverse_engineer(int ** in, int ** out, int num_nodes);
 void swap_alg(int num_nodes, int num_swaps, int **a, int **b);
@@ -11,47 +12,24 @@ void swap_alg(int num_nodes, int num_swaps, int **a, int **b);
 int main(int argc, char *argv[]){
 
 	srand(time(NULL));
-	int num_nodes, i, opt, nflag, sflag, num_swaps;
+	int i, num_nodes, num_swaps;
+	int nproc, rank;
 	double time_taken;
 	clock_t begin, end;
 
-	nflag=0;
-	sflag=0;
-	opterr=0;
+	MPI_Init(&argc,&argv);
 
-	// handle command line options
-	while ((opt = getopt(argc, argv, "n:s:")) != -1){
-		switch (opt){
-      
-		case 'n':
-			num_nodes = atoi(optarg);
-			nflag=1;
-			break;
+	MPI_Comm_size(MPI_COMM_WORLD,&nproc);
+	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
-		case 's':
-			num_swaps = atoi(optarg);
-			sflag=1;
-			break;
-	
-		case '?': 
-			if(optopt=='n')
-				printf("need an argument for -%c\n", optopt);
-			else if(optopt=='s')
-				printf("need an argument for -%c\n", optopt);
-			else if(isprint(optopt))
-				printf("Unknown option '-%c'\n", optopt);
-			else
-				printf("what's going on here\n");
-				return 1;
-
-	default:
-		abort();
-		}
+	if (argc != 3){
+		if(rank==0)
+			printf("ERROR! Usage: mpirun -n %d %s #num_nodes #num_swaps\n", nproc, argv[0]); 
+		MPI_Abort(MPI_COMM_WORLD,1);	
 	}
 
-	// set defaults for no vals set
-	if(nflag==0) num_nodes=10;
-	if(sflag==0) num_swaps=10;
+	num_nodes = atoi(argv[1]);
+	num_swaps = atoi(argv[2]);
 
 
 	// assign mem
@@ -67,7 +45,7 @@ int main(int argc, char *argv[]){
 	// simply give node the corresponding node in the other set
 	// and the next two as neighbours
 
-	begin = clock(); // begin timing
+	begin = MPI_Wtime(); // begin timing
 
 	for(i=0;i<num_nodes;i++){
 		a[i][0]=i;
@@ -92,9 +70,11 @@ int main(int argc, char *argv[]){
 	swap_alg(num_nodes, num_swaps, a, b);
 	
 	// end timing
-	end = clock();
+	end = MPI_Wtime();
 
 	// calculate time
+
+
 	time_taken = (double)(end - begin)/CLOCKS_PER_SEC;
 
 	// print final config
