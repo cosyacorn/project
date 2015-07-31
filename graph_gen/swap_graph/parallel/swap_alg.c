@@ -5,31 +5,33 @@
 #include<time.h>
 #include<ctype.h>
 #include<mpi.h>
+#include "machine.h"
+#include "array.h"
+
 
 void reverse_engineer(int ** in, int ** out, int num_nodes);
 void swap_alg(int num_nodes, int num_swaps, int **a, int **b);
 
+Machine host;
+
 int main(int argc, char *argv[]){
 
 	srand(time(NULL));
-	int i, num_nodes, num_swaps;
-	int nproc, rank;
+	int i, num_nodes, num_swaps, size_local;
 	double time_taken;
+	Array * a_loc;
 	clock_t begin, end;
 
 	MPI_Init(&argc,&argv);
 
-	MPI_Comm_size(MPI_COMM_WORLD,&nproc);
-	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
-	if (argc != 3){
-		if(rank==0)
-			printf("ERROR! Usage: mpirun -n %d %s #num_nodes #num_swaps\n", nproc, argv[0]); 
-		MPI_Abort(MPI_COMM_WORLD,1);	
-	}
 
 	num_nodes = atoi(argv[1]);
 	num_swaps = atoi(argv[2]);
+
+
+
+	init_machine(argc, argv, num_nodes);
 
 
 	// assign mem
@@ -40,6 +42,8 @@ int main(int argc, char *argv[]){
 		a[i] = (int *)malloc(sizeof(int)*3);
 		b[i] = (int *)malloc(sizeof(int)*3);
 	}
+
+
 
 	// assign neighbours:
 	// simply give node the corresponding node in the other set
@@ -56,6 +60,10 @@ int main(int argc, char *argv[]){
 	// get set b's neighbours
 	reverse_engineer(a, b, num_nodes);
 
+	size_local = num_nodes/host.np;
+
+	a_loc = init_array(size_local, a);
+
 	// print initial config
 	if(num_nodes<10){
 		printf("Initial config\nSet A:\n");
@@ -67,6 +75,8 @@ int main(int argc, char *argv[]){
 			printf("%d: %d %d %d\n", i, b[i][0], b[i][1], b[i][2]);
 	}
 
+	
+
 	swap_alg(num_nodes, num_swaps, a, b);
 	
 	// end timing
@@ -75,21 +85,21 @@ int main(int argc, char *argv[]){
 	// calculate time
 
 
-	time_taken = (double)(end - begin)/CLOCKS_PER_SEC;
+	time_taken = (double)(end - begin);
 
 	// print final config
 
 	if(num_nodes<10){
 		printf("Final config after %d swaps\nSet A:\n", num_swaps);
 		for(i=0;i<num_nodes;i++)
-			printf("%d: %d %d %d\n", i, a[i][0], a[i][1], a[i][2]);
+			pprintf("%d: %d %d %d\n", i, a[i][0], a[i][1], a[i][2]);
 
 		printf("Set B:\n");
 		for(i=0;i<num_nodes;i++)
 			printf("%d: %d %d %d\n", i, b[i][0], b[i][1], b[i][2]);
 	}
 
-	printf("Time to execute: %f\n", time_taken);
+	pprintf("Time to execute: %f\n", time_taken);
 
 	// clean up time
 	for(i=0;i<num_nodes;i++){
@@ -100,11 +110,13 @@ int main(int argc, char *argv[]){
 	free(a);
 	free(b);
 
+	MPI_Finalize();
+
 	return 0;
 }
 
 
-void swap_alg(int num_nodes, int num_swaps, int **a, int **b){
+void swap_alg(int num_nodes, int num_swaps, Array * a, Array * b){
 
 	int flag, flag2;
 	int i, count;
@@ -114,11 +126,17 @@ void swap_alg(int num_nodes, int num_swaps, int **a, int **b){
 	int a_point1, a_point2;
 	int b_point1, b_point2;
 
+	int rank1;
+
 // do required no of swaps
 	for(i=0;i<num_swaps;i++){
 
-		a_first = (rand())%num_nodes; // first point in a picked at random
+		// do initial selection on rank 0
+		if(host.rank == 0){
+			a_first = (rand())%num_nodes; // first point in a picked at random
 
+			rank1 = a_first/host.np;	
+		}
 
 		do {
 			count=0;
