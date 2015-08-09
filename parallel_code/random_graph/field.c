@@ -22,16 +22,11 @@ Field * init_field(Array * a){
 		if(d>0.5) f->value[i] = 1;
 		else f->value[i] = -1;
 	}
-	//for(i=0;i<size;i++)
-		//f->value[i]=host.rank;
-
 
 
 	f->halo_count = (int *) malloc(sizeof(int) * host.np);
 	
 	for(i=0;i<host.np;i++) f->halo_count[i]=0;
-
-	//for(i=0;i<host.np;i++) pprintf("halo count %d from proc %d\n", f->halo_count[i], i);
 
 	//determine how many neighbours are on each process
 
@@ -47,7 +42,11 @@ Field * init_field(Array * a){
 
 	f->halo = (int **) malloc(sizeof(int *) * host.np);
 	for(i=0;i<host.np;i++){
-		f->halo[i] = (int *) malloc(sizeof(int) * f->halo_count[i]);
+		if(f->halo_count[i] != 0){
+			f->halo[i] = (int *) malloc(sizeof(int) * f->halo_count[i]);
+		} else {
+			f->halo[i] = (int *) malloc(sizeof(int) * 1);
+		}
 	}
 
 

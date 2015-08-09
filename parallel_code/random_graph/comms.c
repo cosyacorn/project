@@ -55,10 +55,11 @@ static void send(Field* f, Array* a, BoundaryComm* c){
 		}
 	}
 
+	free(k);
+
 	MPI_Waitall(host.np-1, c->send, c->send_status);
 	MPI_Waitall(host.np-1, c->recv, c->recv_status);
 
-	free(k);
 }
 
 
@@ -184,4 +185,5 @@ void send_boundary_data(Field* f, Array* a){
 	unpack(f, a, comm);
 
 	free_comm(comm);
+
 }

@@ -14,15 +14,7 @@ void check_array(Array* a){
 		MPI_Abort(MPI_COMM_WORLD,1); 
 	}
 
-	//a->x_offset = host.rank;
-
-	//pprintf("%ZRunning Ising model on %d processes\n",host.np);
-
 	MPI_Barrier(MPI_COMM_WORLD);
-
-	//pprintf("%Z Offset: %d\n",a->x_offset);
-
-	
 
 }
 
@@ -46,10 +38,20 @@ Array * init_array(int num_local_nodes, int **graph){
 		}
 	}
 	check_array(a);
+
+	
 	return a;
 }
 
-//void print_array(int num_nodes, 
+void print_array(Array *a){
+
+	int i, j;
+
+	for(i=0;i<a->x_local;i++)
+		for(j=0;j<3;j++)
+			pprintf("%d\n", a->neighbour[i][j]);
+
+}
 
 void free_array(Array *a){
 
@@ -60,5 +62,3 @@ void free_array(Array *a){
 	free(a->neighbour);
 	free(a);
 }
-// =======================================
-

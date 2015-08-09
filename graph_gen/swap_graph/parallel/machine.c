@@ -37,10 +37,10 @@ void pprintf(char *format, ...){
 
 void init_machine(int argc, char *argv[], int tot_nodes){
 
-	if (argc != 3){
-		pprintf("ERROR! Usage: mpirun -n %d %s #num_nodes #num_swaps\n", host.np, argv[0]);
-		MPI_Abort(MPI_COMM_WORLD,1);
-	}
+	//if (argc != 3){
+	//	pprintf("ERROR! Usage: mpirun -n %d %s #num_nodes #num_swaps\n", host.np, argv[0]);
+	//	MPI_Abort(MPI_COMM_WORLD,1);
+	//}
 
 	host.num_nodes_tot = tot_nodes;
 

@@ -8,7 +8,7 @@
 
 
 // double ring graph with n nodes
-int ** make_graph(int num_nodes){
+int ** make_graph(int num_nodes, int num_swaps){
 
 	int **graph, i, j;
 
@@ -21,26 +21,18 @@ int ** make_graph(int num_nodes){
 			graph[i][j] = (i-1+j+num_nodes)%num_nodes;
 		}
 	}
-/*
-	graph[0][0] = 0;
-	graph[0][1] = 1; 
-	graph[0][2] = 3;
-
-	graph[1][0] = 0;
-	graph[1][1] = 1;
-	graph[1][2] = 2;
-
-	graph[2][0] = 1;
-	graph[2][1] = 2;
-	graph[2][2] = 3;
-
-	graph[3][0] = 0;
-	graph[3][1] = 2;
-	graph[3][2] = 3;
-*/ 
 
 	return graph;
 }
+
+void print_graph(int ** a, int num_nodes){
+
+	int i;
+
+	for(i=0;i<num_nodes;i++)
+		pprintf("%Z%d: %d, %d, %d\n", i, a[i][0], a[i][1], a[i][2]);
+}
+
 
 // free graph
 void free_graph(int ** graph, int size){
@@ -97,7 +89,6 @@ void update_one_field(int size, Field *f_a, Field *f_b, double beta, Array *a){
 				}
 				spin[j] = f_b->halo[index[j]][k];
 				f_b->halo[index[j]][k] = 0;
-
 			} else {
 				spin[j] = f_b->value[a->neighbour[i][j]];
 			}

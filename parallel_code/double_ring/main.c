@@ -20,7 +20,7 @@ int main(int argc, char * argv[]){
 
 	num_nodes=100;
 	beta=0.001;
-	num_updates=100000;
+	num_updates=10000;
 
 	MPI_Init(&argc,&argv);
 
@@ -39,22 +39,34 @@ int main(int argc, char * argv[]){
 
 	f_a = init_field(a);
 	f_b = init_field(b);
+
+	// OPEN RESULTS FILE
+	FILE* o;
+	char *filename = malloc(sizeof(char) * 15);
+	if(host.rank==0){
+
+		sprintf(filename,"results.%.2d.txt",host.np);
+		o = fopen(filename,"w");
+
+		fprintf(o, "Machine geometry: %d nodes (%d total nodes) on %d procs. %d nodes per proc\nNum update steps: %d\n",host.num_nodes_tot, 2*host.num_nodes_tot, host.np, host.num_nodes_local, num_updates);
+	}
 	
-	//MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
 
 	t1 = MPI_Wtime();
 
-	//for(beta=0.01;beta<1.00;beta+=0.01){
+	for(beta=0.01;beta<1.00;beta+=0.01){
 		avg=0.0;
 		for(i=0;i<num_updates;i++){
 			update(size, f_a, f_b, beta, a, b);
 			avg += magnetisation(f_a,a) + magnetisation(f_b,b);
 		}
+		if(host.rank == 0){
+			fprintf(o, "beta: %lf; avg magnetisation: %lf\n",beta,avg/(double) num_updates);
+		}
+	}
 
-		pprintf("%Zbeta: %lf; avg magnetisation: %lf\n",beta,avg/(double) num_updates);
-	//}
-
-	/*for(beta=1.00;beta>0.00;beta-=0.01){
+	for(beta=1.00;beta>0.00;beta-=0.01){
 		avg=0.0;
 		for(i=0;i<num_updates;i++){
 			update(size, f_a, f_b, beta, a, b);
@@ -64,30 +76,21 @@ int main(int argc, char * argv[]){
 		}
 	
 		t2 = MPI_Wtime();
-
-		pprintf("%Zbeta: %lf; avg magnetisation: %lf\n",beta,avg/(double) num_updates);
-	}*/
+		
+		if(host.rank == 0){
+			fprintf(o, "beta: %lf; avg magnetisation: %lf\n",beta,avg/(double) num_updates);
+		}
+	}
 
 	t2 = MPI_Wtime();
 
-	pprintf("%Ztotal time taken: %lf\n", t2-t1);
-
-/*	if(host.rank==0){
-
-		FILE* o;
-		char *filename = malloc(sizeof(char) * 15);
-
-		sprintf(filename,"results.%.2d.txt",host.np);
-		o = fopen(filename,"w");
-
-		fprintf(o, "Machine geometry: %d nodes on %d procs. %d nodes per proc\n",host.num_nodes_tot , host.np, host.num_nodes_local);
-		fprintf(o, "beta: %lf; avg magnetisation: %lf\n",beta,avg/(double) num_updates);
+	if(host.rank==0){
 		fprintf(o, "total time taken: %lf\n", t2-t1);
 
 		fclose(o);
 		free(filename);
 	}
-*/
+
 	// clean up
 	free_array(a);
 	free_array(b);
