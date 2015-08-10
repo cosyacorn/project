@@ -1,0 +1,5 @@
+Machine geometry: 3200 nodes in each set (6400 total nodes)  on 2 procs. 1600 nodes per proc
+beta: 0.001000; avg magnetisation: 0.022589
+total time taken: 0.173279
+no swaps done. Graph is double ring graph
+number of update steps: 1000

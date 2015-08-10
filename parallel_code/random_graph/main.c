@@ -22,7 +22,7 @@ int main(int argc, char * argv[]){
 	num_nodes=3200;
 	beta=0.001;
 	num_updates=1000;
-	num_swaps=0;
+	num_swaps=5000;
 
 	MPI_Init(&argc,&argv);
 
@@ -34,7 +34,7 @@ int main(int argc, char * argv[]){
 	a_graph = make_graph(num_nodes);
 	b_graph = make_graph(num_nodes);
 
-	swap_alg(num_nodes, num_swaps, a_graph, b_graph);
+	
 
 	if(num_nodes<=10){
 		print_graph(a_graph, num_nodes);
@@ -45,6 +45,8 @@ int main(int argc, char * argv[]){
 
 	a = init_array(size, a_graph);
 	b = init_array(size, b_graph);
+
+	parallel_swap_alg(num_nodes, num_swaps, a, b);
 
 	f_a = init_field(a);
 	f_b = init_field(b);

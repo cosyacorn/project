@@ -10,4 +10,4 @@ double-ring: double_ring.tex
 
 .PHONY: clean
 clean:
-	$(RM) *.aux *.log *.out
+	$(RM) *.aux *.log *.out *.toc

@@ -17,6 +17,8 @@ Machine host;
 
 int main(int argc, char *argv[]){
 
+	
+
 	srand(time(NULL));
 	int i, j, num_nodes, num_swaps, size_local;
 	double time_taken;
@@ -25,7 +27,7 @@ int main(int argc, char *argv[]){
 
 	MPI_Init(&argc,&argv);
 
-	num_nodes = 8;
+	num_nodes = 16;
 	num_swaps = 1;
 
 	init_machine(argc, argv, num_nodes);
@@ -38,6 +40,14 @@ int main(int argc, char *argv[]){
 		a[i] = (int *)malloc(sizeof(int)*3);
 		b[i] = (int *)malloc(sizeof(int)*3);
 	}
+
+	int * send_count;
+
+	send_count = (int *)malloc(sizeof(int)*host.np);
+
+	for(i=0; i<host.np;i++)
+		send_count[i]=0;
+	
 
 	// assign neighbours:
 	// simply give node the corresponding node in the other set
@@ -72,48 +82,46 @@ int main(int argc, char *argv[]){
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
 	parallel_swap_alg(num_nodes, num_swaps, a_loc, b_loc);
-
+	MPI_Barrier(MPI_COMM_WORLD);
 	// end timing
 	end = MPI_Wtime();
-
+	
 	// calculate time
 	time_taken = (double)(end - begin);
 
 	
 
-	// print final config
-	if(num_nodes<10){
-		for(i=0;i<size_local;i++){
-			//for(j=0;j<3;j++){
-				a[host.rank*size_local+i][0] = a_loc->neighbour[i][0];
-				b[host.rank*size_local+i][0] = b_loc->neighbour[i][0];
-				a[host.rank*size_local+i][1] = a_loc->neighbour[i][1];
-				b[host.rank*size_local+i][1] = b_loc->neighbour[i][1];
-				a[host.rank*size_local+i][2] = a_loc->neighbour[i][2];
-				b[host.rank*size_local+i][2] = b_loc->neighbour[i][2];
-			//}
-		//printf("\n");
-		}
-		MPI_Barrier(MPI_COMM_WORLD);
-		pprintf("%ZFinal config after %d swaps\nSet A:\n", num_swaps);
-		for(j=0;j<host.np;j++){
-			if(j==host.rank){
-				for(i=0;i<size_local;i++){
-					printf("%d: %d %d %d\n", i, a_loc->neighbour[i][0], a_loc->neighbour[i][1], a_loc->neighbour[i][2]);
-				}
+	for(i=0;i<a_loc->x_local;i++){
+		// j=3 for trivalent - need to generalise
+		for(j=0;j<3;j++){
+			printf("%d < %d or %d >= %d\n", a_loc->neighbour[i][j], host.rank*a_loc->x_local, a_loc->neighbour[i][j], (host.rank+1)*a_loc->x_local);
+			if(a_loc->neighbour[i][j] < host.rank*a_loc->x_local || a_loc->neighbour[i][j] >= (host.rank+1)*a_loc->x_local){
+				printf("yes %d\n", a_loc->neighbour[i][j]/a_loc->x_local);
+				send_count[a_loc->neighbour[i][j]/a_loc->x_local]++;
+				printf("yes.... %d\n", send_count[a_loc->neighbour[i][j]/a_loc->x_local]);
 			}
-			MPI_Barrier(MPI_COMM_WORLD);
 		}
-			//pprintf("%Z%d: %d %d %d\n", i, a[i][0], a[i][1], a[i][2]);
-
-		MPI_Barrier(MPI_COMM_WORLD);
-		//pprintf("%ZSet B:\n");
-		//for(i=0;i<size_local;i++)
-			//printf("%d: %d %d %d\n", i, b_loc->neighbour[i][0], b_loc->neighbour[i][1], b_loc->neighbour[i][2]);
-			//pprintf("%Z%d: %d %d %d\n", i, b[i][0], b[i][1], b[i][2]);
 	}
 
+
+	// print final config
+	/*if(num_nodes<10){
+	
+	for (i=0;i<a_loc->x_local;i++)
+      printf("%d: %d %d %d\n",i+a_loc->x_offset*size_local, a_loc->neighbour[i][0], a_loc->neighbour[i][1], a_loc->neighbour[i][2]);
+	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
+	for (i=0;i<a_loc->x_local;i++)
+      printf("%d: %d %d %d\n",i+a_loc->x_offset*size_local, b_loc->neighbour[i][0], b_loc->neighbour[i][1], b_loc->neighbour[i][2]);
+	
+	}*/
+
+	
+	MPI_Barrier(MPI_COMM_WORLD);
 	pprintf("%ZTime to execute: %f\n", time_taken);
+
+	for(i=0;i<host.np;i++)
+		pprintf("send[%d] = %d\n", i, send_count[i]);
 
 	// clean up time
 	for(i=0;i<num_nodes;i++){
@@ -123,6 +131,8 @@ int main(int argc, char *argv[]){
 
 	free(a);
 	free(b);
+
+	free(send_count);
 
 	MPI_Finalize();
 
@@ -153,7 +163,7 @@ void parallel_swap_alg(int num_nodes, int num_swaps, Array * a, Array * b){
 			a_first = (rand())%num_nodes; // first point in a picked at random
 			ranka_first = a_first/host.num_nodes_local;
 
-			printf("a1 = %d\n", a_first);
+			//printf("a1 = %d\n", a_first);
 
 			if(host.rank == ranka_first){
 				index_n1 = rand()%3; // index of first neighbour
@@ -176,7 +186,7 @@ void parallel_swap_alg(int num_nodes, int num_swaps, Array * a, Array * b){
 			MPI_Bcast(&b_point1, 1, MPI_INT, ranka_first, MPI_COMM_WORLD);
 			MPI_Bcast(&b_point2, 1, MPI_INT, ranka_first, MPI_COMM_WORLD);
 
-			printf("b1 %d\t b2 %d\n", b_point1, b_point2);
+			//printf("b1 %d\t b2 %d\n", b_point1, b_point2);
 
 			rankb1 = b_point1/host.num_nodes_local;
 			rankb2 = b_point2/host.num_nodes_local;
@@ -248,7 +258,7 @@ void parallel_swap_alg(int num_nodes, int num_swaps, Array * a, Array * b){
 			} while(flag2 == 1);
 		} while(flag==1);
 
-		printf("a1 %d\t a2 %d\n", a_point1, a_point2);
+		//printf("a1 %d\t a2 %d\n", a_point1, a_point2);
 
 		ranka1 = a_point1/host.num_nodes_local;
 		ranka2 = a_point2/host.num_nodes_local;
