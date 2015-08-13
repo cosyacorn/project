@@ -8,8 +8,21 @@
 // =======================================
 // Only use this structure inside this file 
 
+typedef struct {
+	MPI_Request *send;
+	MPI_Status  *send_status;
+	MPI_Request *recv;
+	MPI_Status  *recv_status;
 
-BoundaryComm* init_comm(Array* a){
+	int **buffer_send;
+	int **buffer_recv;
+
+	int *send_count;
+	int *recv_count;
+
+} BoundaryComm; 
+
+static BoundaryComm* init_comm(Array* a){
 
 	int i, j;
 	BoundaryComm *c = malloc(sizeof(BoundaryComm));
@@ -32,10 +45,10 @@ BoundaryComm* init_comm(Array* a){
 	MPI_Request * send_ptr = send;
 	MPI_Request * recv_ptr = recv; 
 
-	for(i=0;i<host.np;i++)
+	for(i=0;i<host.np;i++){
 		c->send_count[i]=0;
-	for(i=0;i<host.np;i++)
 		c->recv_count[i]=0;
+	}
 
 	//determine how many to be sent to each process
 
@@ -51,11 +64,11 @@ BoundaryComm* init_comm(Array* a){
 	c->buffer_send = (int **) malloc(sizeof(int *) * host.np);
 
 	for(i=0;i<host.np;i++){
-		if(c->send_count[i] != 0){
+	//	if(c->send_count[i] != 0){
 			c->buffer_send[i] = (int *) malloc(sizeof(int) * c->send_count[i]);
-		} else {
-			c->buffer_send[i] = (int *) malloc(sizeof(int) * 1);
-		}
+	//	} else {
+	//		c->buffer_send[i] = (int *) malloc(sizeof(int) * 1);
+	//	}
 	}
 
 	for(i=0;i<host.np;i++){
@@ -73,11 +86,11 @@ BoundaryComm* init_comm(Array* a){
 	c->buffer_recv = (int **) malloc(sizeof(int *) * host.np);
 
 	for(i=0;i<host.np;i++){
-		if(c->recv_count[i] != 0){
+		//if(c->recv_count[i] != 0){
 			c->buffer_recv[i] = (int *) malloc(sizeof(int) * c->recv_count[i]);
-		} else {
-			c->buffer_recv[i] = (int *) malloc(sizeof(int) * 1);
-		}
+		//} else {
+			//c->buffer_recv[i] = (int *) malloc(sizeof(int) * 1);
+		//}
 	}
 
 	free(send);
@@ -89,7 +102,7 @@ BoundaryComm* init_comm(Array* a){
 }
 
 
-void free_comm(BoundaryComm* c){
+static void free_comm(BoundaryComm* c){
 
 	int i;
 
@@ -115,8 +128,7 @@ void free_comm(BoundaryComm* c){
 	//pprintf("fe\n");
 }
 
-// Only visible inside this file
-void send(Field* f, Array* a, BoundaryComm* c){
+static void send(Field* f, Array* a, BoundaryComm* c){
 
 	int i, j, *k;
 
@@ -153,9 +165,7 @@ void send(Field* f, Array* a, BoundaryComm* c){
 
 }
 
-
-
-void unpack(Field* f, Array* a, BoundaryComm* c){
+static void unpack(Field* f, Array* a, BoundaryComm* c){
 
 	int i, j;
 
@@ -171,23 +181,18 @@ void unpack(Field* f, Array* a, BoundaryComm* c){
 
 
 
-
-
-
 // Can be called from outside file
 
 
-void send_boundary_data(Field* f, Array* a, BoundaryComm * comm){
+void send_boundary_data(Field* f, Array* a){
 
-	
-
-	printf("1\n");
+	BoundaryComm * comm = init_comm(a);
 
 	send(f, a, comm);
-//printf("2\n");
+
 
 	unpack(f, a, comm);
-//printf("3\n");
 	
-//printf("4\n");
+	free_comm(comm);
+
 }

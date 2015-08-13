@@ -21,8 +21,8 @@ int main(int argc, char * argv[]){
 
 	num_nodes=32;
 	beta=0.001;
-	num_updates=1000;
-	num_swaps=5;
+	num_updates=1;
+	num_swaps=10;
 
 	MPI_Init(&argc,&argv);
 
@@ -30,11 +30,9 @@ int main(int argc, char * argv[]){
 
 	srand48(time(NULL)+host.rank);
 	srand(12345);
-	
-	a_graph = make_graph(num_nodes);
-	b_graph = make_graph(num_nodes);
 
-	
+	a_graph = make_graph(num_nodes);
+	b_graph = make_graph(num_nodes);	
 
 	if(num_nodes<=10){
 		print_graph(a_graph, num_nodes);
@@ -49,16 +47,11 @@ int main(int argc, char * argv[]){
 	f_a = init_field(a);
 	f_b = init_field(b);
 
-	BoundaryComm* a_comm = init_comm(a);
-	BoundaryComm* b_comm = init_comm(b);
+	send_boundary_data(f_a, a);
+	
+	send_boundary_data(f_b, b);
 
-	send_boundary_data(f_a, a, a_comm);
 	MPI_Barrier(MPI_COMM_WORLD);
-	printf("hello\n");
-	send_boundary_data(f_b, b, b_comm);
-
-	printf("hello 2\n");
-
 	parallel_swap_alg(num_nodes, num_swaps, a, b);
 
 	t1 = MPI_Wtime();
@@ -66,14 +59,9 @@ int main(int argc, char * argv[]){
 	//for(beta=0.01;beta<1.00;beta+=0.01){
 		avg=0.0;
 		for(i=0;i<num_updates;i++){
-			printf("burp\n");
-			update(size, f_a, f_b, beta, a, b, a_comm, b_comm);
-			printf("hello %d\n", i); 
+			update(size, f_a, f_b, beta, a, b);
 			avg += magnetisation(f_a,a) + magnetisation(f_b,b);
 		}
-
-	free_comm(a_comm);
-	free_comm(b_comm);
 
 		//pprintf("%Zbeta: %lf; avg magnetisation: %lf\n",beta,avg/(double) num_updates);
 	//}

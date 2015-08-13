@@ -110,15 +110,15 @@ void update_one_field(int size, Field *f_a, Field *f_b, double beta, Array *a){
 }
 
 // update the whole graph
-void update(int size, Field *f_a, Field *f_b, double beta, Array *a, Array *b, BoundaryComm * a_comm, BoundaryComm * b_comm){
+void update(int size, Field *f_a, Field *f_b, double beta, Array *a, Array *b){
 
 	// update field a first
 	update_one_field(size, f_a, f_b, beta, a);
-	send_boundary_data(f_a, a, a_comm);
+	send_boundary_data(f_a, a);
 
 	// then update field b
 	update_one_field(size, f_b, f_a, beta, b);
-	send_boundary_data(f_b, b, b_comm);
+	send_boundary_data(f_b, b);
 }
 
 double magnetisation(Field* phi, Array* a){

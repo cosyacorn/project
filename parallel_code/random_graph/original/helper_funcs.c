@@ -6,9 +6,11 @@
 #include "comms.h"
 #include "machine.h"
 
+#include <stdio.h>
+
 
 // double ring graph with n nodes
-int ** make_graph(int num_nodes, int num_swaps){
+int ** make_graph(int num_nodes){
 
 	int **graph, i, j;
 
@@ -77,20 +79,29 @@ void update_one_field(int size, Field *f_a, Field *f_b, double beta, Array *a){
 	int spin[3];
 	double r, n;
 
-
 	for(i=0;i<size;i++){
 		for(j=0;j<3;j++){
+			//pprintf("a->neighbour[i][j]= %d\nhost.rank*size = %d\n(host.rank+1)*size = %d\n", a->neighbour[i][j], host.rank*size, (host.rank+1)*size);
 			if(a->neighbour[i][j] < host.rank*size || a->neighbour[i][j] >= (host.rank+1)*size){
 				// set spin1 to halo
 				k=0;				
 				index[j] = a->neighbour[i][j]/size;
+				//pprintf("index %d\n", index[j]);
 				while(f_b->halo[index[j]][k] == 0){
 					k++;
 				}
 				spin[j] = f_b->halo[index[j]][k];
 				f_b->halo[index[j]][k] = 0;
 			} else {
-				spin[j] = f_b->value[a->neighbour[i][j]];
+				// DEBUGGING HERE
+				//if (host.rank != 0) {
+				//	printf("a->neighbour[i][j] = %d\n", a->neighbour[i][j]);
+				///printf("f_b= %p\n", f_b);
+				//	printf("f_b->value[a->neighbour[i][j]] = %d\n", f_b->value[a->neighbour[i][j]%size]);
+					//printf("spin[j] = %d\n", spin[j]);
+				//}
+
+				spin[j] = f_b->value[a->neighbour[i][j]%size];
 			}
 		}
 		ham = hamiltonian_local(f_a->value[i], spin[0], spin[1], spin[2]);
@@ -113,12 +124,17 @@ void update_one_field(int size, Field *f_a, Field *f_b, double beta, Array *a){
 void update(int size, Field *f_a, Field *f_b, double beta, Array *a, Array *b){
 
 	// update field a first
+//	pprintf("entering update\n");
 	update_one_field(size, f_a, f_b, beta, a);
+//	pprintf("finished one update\nentering send\n");
 	send_boundary_data(f_a, a);
+	MPI_Barrier(MPI_COMM_WORLD);
+//	pprintf("exited send\n");
 
 	// then update field b
 	update_one_field(size, f_b, f_a, beta, b);
 	send_boundary_data(f_b, b);
+	MPI_Barrier(MPI_COMM_WORLD);
 }
 
 double magnetisation(Field* phi, Array* a){

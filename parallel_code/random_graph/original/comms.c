@@ -45,10 +45,10 @@ static BoundaryComm* init_comm(Array* a){
 	MPI_Request * send_ptr = send;
 	MPI_Request * recv_ptr = recv; 
 
-	for(i=0;i<host.np;i++)
+	for(i=0;i<host.np;i++){
 		c->send_count[i]=0;
-	for(i=0;i<host.np;i++)
 		c->recv_count[i]=0;
+	}
 
 	//determine how many to be sent to each process
 
@@ -67,7 +67,7 @@ static BoundaryComm* init_comm(Array* a){
 		if(c->send_count[i] != 0){
 			c->buffer_send[i] = (int *) malloc(sizeof(int) * c->send_count[i]);
 		} else {
-			c->buffer_send[i] = (int *) malloc(sizeof(int) * 1);
+			c->buffer_send[i] = NULL;
 		}
 	}
 
@@ -89,7 +89,7 @@ static BoundaryComm* init_comm(Array* a){
 		if(c->recv_count[i] != 0){
 			c->buffer_recv[i] = (int *) malloc(sizeof(int) * c->recv_count[i]);
 		} else {
-			c->buffer_recv[i] = (int *) malloc(sizeof(int) * 1);
+			c->buffer_recv[i] = NULL;
 		}
 	}
 
@@ -188,15 +188,9 @@ void send_boundary_data(Field* f, Array* a){
 
 	BoundaryComm * comm = init_comm(a);
 
-	printf("1\n");
-
 	send(f, a, comm);
-//printf("2\n");
-
+	pprintf("sent\n");
 	unpack(f, a, comm);
-//printf("3\n");
-	
+	pprintf("received\n");
 	free_comm(comm);
-
-//printf("4\n");
 }

@@ -42,11 +42,11 @@ Field * init_field(Array * a){
 
 	f->halo = (int **) malloc(sizeof(int *) * host.np);
 	for(i=0;i<host.np;i++){
-		if(f->halo_count[i] != 0){
+		//if(f->halo_count[i] != 0){
 			f->halo[i] = (int *) malloc(sizeof(int) * f->halo_count[i]);
-		} else {
-			f->halo[i] = (int *) malloc(sizeof(int) * 1);
-		}
+		//} else {
+		//	f->halo[i] = (int *) malloc(sizeof(int) * 1);
+		//}
 	}
 
 

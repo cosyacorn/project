@@ -23,6 +23,9 @@ Field * init_field(Array * a){
 		else f->value[i] = -1;
 	}
 
+	for(i=0;i<size;i++)
+		//if(host.rank != 0)
+			//pprintf("value = %d\n", f->value[i]);
 
 	f->halo_count = (int *) malloc(sizeof(int) * host.np);
 	
@@ -45,7 +48,7 @@ Field * init_field(Array * a){
 		if(f->halo_count[i] != 0){
 			f->halo[i] = (int *) malloc(sizeof(int) * f->halo_count[i]);
 		} else {
-			f->halo[i] = (int *) malloc(sizeof(int) * 1);
+			f->halo[i] = NULL;
 		}
 	}
 

@@ -14,15 +14,15 @@ Machine host;
 
 int main(int argc, char * argv[]){
 
-	int num_nodes, num_swaps, i, **a_graph, **b_graph, num_updates, size;
+	int num_nodes, num_swaps, i, j, **a_graph, **b_graph, num_updates, size;
 	double beta, avg, t1, t2;
 	Array *a, *b;
 	Field *f_a, *f_b;
 
-	num_nodes=32;
+	num_nodes=80;
 	beta=0.001;
-	num_updates=1000;
-	num_swaps=5;
+	num_updates=10;
+	num_swaps=20000;
 
 	MPI_Init(&argc,&argv);
 
@@ -36,7 +36,7 @@ int main(int argc, char * argv[]){
 
 	if(num_nodes<=10){
 		print_graph(a_graph, num_nodes);
-		print_graph(b_graph, num_nodes);
+	//	print_graph(b_graph, num_nodes);
 	}
 
 	size=num_nodes/host.np;
@@ -44,30 +44,50 @@ int main(int argc, char * argv[]){
 	a = init_array(size, a_graph);
 	b = init_array(size, b_graph);
 
+	//pprintf("about to swap\n");
+	parallel_swap_alg(num_nodes, num_swaps, a, b);
+	MPI_Barrier(MPI_COMM_WORLD);
+	//pprintf("after swap\n");
+
+	//if(host.rank == 0)
+	//	for(i=0;i<size;i++)
+	//		printf("%d: %d %d %d\n", i, a->neighbour[i][0], a->neighbour[i][1], a->neighbour[i][2]);
+
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	//if(host.rank == 1)
+	//	for(i=0;i<size;i++)
+	//		printf("%d: %d %d %d\n", i+a->x_offset*size, a->neighbour[i][0], a->neighbour[i][1], a->neighbour[i][2]);
+
 	f_a = init_field(a);
 	f_b = init_field(b);
 
+	pprintf("halo0 %d halo1 %d\n", f_a->halo_count[0], f_a->halo_count[1]);	
+
+	
+
+	pprintf("entering first send\n");
 	send_boundary_data(f_a, a);
+	//send_boundary_data(f_b, b);
 	MPI_Barrier(MPI_COMM_WORLD);
-	printf("hello\n");
-	send_boundary_data(f_b, b);
+	pprintf("exited first send\n");
 
-	printf("hello 2\n");
-
-	parallel_swap_alg(num_nodes, num_swaps, a, b);
+	for(i=0;i<2;i++)
+		for(j=0;j<f_a->halo_count[i];j++)
+			pprintf("f halo %d %d = %d\n", i, j, f_a->halo[i][j]);
 
 	t1 = MPI_Wtime();
 
 	//for(beta=0.01;beta<1.00;beta+=0.01){
 		avg=0.0;
 		for(i=0;i<num_updates;i++){
-			printf("burp\n");
-			update(size, f_a, f_b, beta, a, b);
-			printf("hello %d\n", i); 
-			avg += magnetisation(f_a,a) + magnetisation(f_b,b);
+			//printf("burp\n");
+	//		update(size, f_a, f_b, beta, a, b);
+			//printf("hello %d\n", i); 
+	//		avg += magnetisation(f_a,a) + magnetisation(f_b,b);
 		}
 
-		//pprintf("%Zbeta: %lf; avg magnetisation: %lf\n",beta,avg/(double) num_updates);
+	//	pprintf("%Zbeta: %lf; avg magnetisation: %lf\n",beta,avg/(double) num_updates);
 	//}
 /*
 	for(beta=1.00;beta>0.00;beta-=0.01){
