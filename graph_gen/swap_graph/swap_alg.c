@@ -7,6 +7,7 @@
 
 void reverse_engineer(int ** in, int ** out, int num_nodes);
 void swap_alg(int num_nodes, int num_swaps, int **a, int **b);
+void swap_alg_once(int num_nodes, int **a, int **b);
 
 int main(int argc, char *argv[]){
 
@@ -51,7 +52,7 @@ int main(int argc, char *argv[]){
 
 	// set defaults for no vals set
 	if(nflag==0) num_nodes=10;
-	if(sflag==0) num_swaps=10;
+	if(sflag==0) num_swaps=num_nodes*3*12;
 
 
 	// assign mem
@@ -67,7 +68,6 @@ int main(int argc, char *argv[]){
 	// simply give node the corresponding node in the other set
 	// and the next two as neighbours
 
-	begin = clock(); // begin timing
 
 	for(i=0;i<num_nodes;i++){
 		a[i][0]=i;
@@ -88,6 +88,8 @@ int main(int argc, char *argv[]){
 		for(i=0;i<num_nodes;i++)
 			printf("%d: %d %d %d\n", i, b[i][0], b[i][1], b[i][2]);
 	}
+
+	begin = clock(); // begin timing
 
 	swap_alg(num_nodes, num_swaps, a, b);
 	
@@ -123,102 +125,105 @@ int main(int argc, char *argv[]){
 	return 0;
 }
 
-
 void swap_alg(int num_nodes, int num_swaps, int **a, int **b){
 
+	int i;
+
+	for(i=0;i<num_swaps/2;i++){
+		swap_alg_once(num_nodes, a, b);
+		swap_alg_once(num_nodes, b, a);
+	}
+}
+
+void swap_alg_once(int num_nodes, int **a, int **b){
+
 	int flag, flag2;
-	int i, count;
+	int count;
 	int a_first, index_n1, index_n2;
 	int index1, index2, index3, index4;
 	int b_index1, b_index2;
 	int a_point1, a_point2;
 	int b_point1, b_point2;
 
-// do required no of swaps
-	for(i=0;i<num_swaps;i++){
+	a_first = (rand())%num_nodes; // first point in a picked at random
 
-		a_first = (rand())%num_nodes; // first point in a picked at random
+	do {
+		count=0;
+		flag2=0;
+		index_n1 = rand()%3; // index of first neighbour
+		index_n2 = rand()%3; // index of sencond neighbour
+		while(index_n1 == index_n2)
+			index_n2 = rand()%3; // ensure indices don't match
 
+		// find points in set b connected to point 'index' in a
+		b_point1 = a[a_first][index_n1]; // point1 in b
+		b_point2 = a[a_first][index_n2]; // point2 in b
 
-		do {
-			count=0;
-			flag2=0;
-
-			index_n1 = rand()%3; // index of first neighbour
-			index_n2 = rand()%3; // index of sencond neighbour
-			while(index_n1 == index_n2)
-				index_n2 = rand()%3; // ensure indices don't match
-
-			// find points in set b connected to point 'index' in a
-			b_point1 = a[a_first][index_n1]; // point1 in b
-			b_point2 = a[a_first][index_n2]; // point2 in b
-
-
-			index1=0;
-			index2=0;
-
-			// find correct indices
-			while(b[b_point1][index1] != a_first)
-				index1++;
-
-			while(b[b_point2][index2] != a_first)
-				index2++;
-
-			do{
-				flag=0;
-				count++;
-				b_index1 = rand()%3; // neighbour index for first point in b to get point in a
-				b_index2 = rand()%3; // same for second point
-
-				// ensure that we don't pick a_first
-				while(b_index1 == index1)
-					b_index1 = rand()%3;
-
-				while(b_index2 == index2)
-					b_index2 = rand()%3;
-
-
-				if(b[b_point1][b_index1] == b[b_point2][b_index2]) // both are same point in a
-					flag=1;    
-
-				if(b[b_point1][b_index1] == b[b_point2][3-(index2+b_index2)]) // point1 is same as a neighbour of 2
-					flag=1;
-
-				if(b[b_point2][b_index2] == b[b_point1][3-(index1+b_index1)])
-					flag=1;
-
-				// ensure that it stops and starts again if no valid neighbour is found
-				if(count>20){
-					flag2=1;
-					break;
-				}
-
-			} while(flag==1);
-		} while (flag2==1);
-
-		// set the final points chosen in a
-		a_point1 = b[b_point1][b_index1];
-		a_point2 = b[b_point2][b_index2];
-
-
-		index3=0;
-		index4=0;
+		index1=0;
+		index2=0;
 
 		// find correct indices
-		while(a[a_point1][index3] != b_point1)
-			index3++;
+		while(b[b_point1][index1] != a_first)
+			index1++;
 
-		while(a[a_point2][index4] != b_point2)
-			index4++;
+		while(b[b_point2][index2] != a_first)
+			index2++;
+
+		do{
+			flag=0;
+			count++;
+			b_index1 = rand()%3; // neighbour index for first point in b to get point in a
+			b_index2 = rand()%3; // same for second point
+
+			// ensure that we don't pick a_first
+			while(b_index1 == index1)
+				b_index1 = rand()%3;
+
+			while(b_index2 == index2)
+				b_index2 = rand()%3;
+
+
+			if(b[b_point1][b_index1] == b[b_point2][b_index2]) // both are same point in a
+				flag=1;    
+
+			if(b[b_point1][b_index1] == b[b_point2][3-(index2+b_index2)]) // point1 is same as a neighbour of 2
+				flag=1;
+
+			if(b[b_point2][b_index2] == b[b_point1][3-(index1+b_index1)])
+				flag=1;
+
+			// ensure that it stops and starts again if no valid neighbour is found
+			if(count>20){
+				flag2=1;
+				break;
+			}
+
+		} while(flag==1);
+	} while (flag2==1);
+
+	// set the final points chosen in a
+	a_point1 = b[b_point1][b_index1];
+	a_point2 = b[b_point2][b_index2];
+
+
+	index3=0;
+	index4=0;
+
+	// find correct indices
+	while(a[a_point1][index3] != b_point1)
+		index3++;
+
+	while(a[a_point2][index4] != b_point2)
+		index4++;
 
 		// swap the points
-		a[a_point1][index3] = b_point2;
-		a[a_point2][index4] = b_point1;
+	a[a_point1][index3] = b_point2;
+	a[a_point2][index4] = b_point1;
 
-		b[b_point2][b_index2] = a_point1;
-		b[b_point1][b_index1] = a_point2;
+	b[b_point2][b_index2] = a_point1;
+	b[b_point1][b_index1] = a_point2;
 
-	}
+
 }
 
 void reverse_engineer(int ** in, int ** out, int num_nodes){

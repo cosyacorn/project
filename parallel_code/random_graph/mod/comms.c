@@ -7,77 +7,9 @@
 
 // =======================================
 // Only use this structure inside this file 
-typedef struct {
-	MPI_Request *send;
-	MPI_Status  *send_status;
-	MPI_Request *recv;
-	MPI_Status  *recv_status;
-
-	int **buffer_send;
-	int **buffer_recv;
-
-	int *send_count;
-	int *recv_count;
-
-} BoundaryComm; 
 
 
-
-
-// Only visible inside this file
-static void send(Field* f, Array* a, BoundaryComm* c){
-
-	int i, j, *k;
-
-	k = (int *) malloc(sizeof(int) * host.np);
-
-	for(i=0;i<host.np;i++) k[i]=0;
-
-	MPI_Request * send_ptr = c->send;
-	MPI_Request * recv_ptr = c->recv;
-
-	// copy to buffer
-	for(i=0;i<a->x_local;i++){
-		for(j=0;j<3;j++){
-			if(a->neighbour[i][j] < host.rank*a->x_local || a->neighbour[i][j] >= (host.rank+1)*a->x_local){
-				c->buffer_send[a->neighbour[i][j]/a->x_local][k[a->neighbour[i][j]/a->x_local]] = f->value[i];
-				k[a->neighbour[i][j]/a->x_local]++;
-			}
-		}
-	}
-
-	for(i=0;i<host.np;i++){
-		if(host.rank !=i){
-			MPI_Isend(c->buffer_send[i], c->send_count[i], MPI_INT, i, 100*host.rank, MPI_COMM_WORLD, send_ptr);
-			send_ptr++;
-			MPI_Irecv(c->buffer_recv[i], c->recv_count[i], MPI_INT, i, 100*i, MPI_COMM_WORLD, recv_ptr);
-			recv_ptr++;
-		}
-	}
-
-	free(k);
-
-	MPI_Waitall(host.np-1, c->send, c->send_status);
-	MPI_Waitall(host.np-1, c->recv, c->recv_status);
-
-}
-
-
-
-static void unpack(Field* f, Array* a, BoundaryComm* c){
-
-	int i, j;
-
-	for(i=0;i<host.np;i++){
-		for(j=0;j<c->recv_count[i];j++){
-				f->halo[i][j] = c->buffer_recv[i][j];
-		}
-	}
-}
-
-
-
-static BoundaryComm* init_comm(Array* a){
+BoundaryComm* init_comm(Array* a){
 
 	int i, j;
 	BoundaryComm *c = malloc(sizeof(BoundaryComm));
@@ -119,7 +51,11 @@ static BoundaryComm* init_comm(Array* a){
 	c->buffer_send = (int **) malloc(sizeof(int *) * host.np);
 
 	for(i=0;i<host.np;i++){
-		c->buffer_send[i] = (int *) malloc(sizeof(int) * c->send_count[i]);
+		if(c->send_count[i] != 0){
+			c->buffer_send[i] = (int *) malloc(sizeof(int) * c->send_count[i]);
+		} else {
+			c->buffer_send[i] = (int *) malloc(sizeof(int) * 1);
+		}
 	}
 
 	for(i=0;i<host.np;i++){
@@ -135,8 +71,13 @@ static BoundaryComm* init_comm(Array* a){
 	MPI_Waitall(host.np-1, recv, recv_status);
 
 	c->buffer_recv = (int **) malloc(sizeof(int *) * host.np);
+
 	for(i=0;i<host.np;i++){
-		c->buffer_recv[i] = (int *) malloc(sizeof(int) * c->recv_count[i]);
+		if(c->recv_count[i] != 0){
+			c->buffer_recv[i] = (int *) malloc(sizeof(int) * c->recv_count[i]);
+		} else {
+			c->buffer_recv[i] = (int *) malloc(sizeof(int) * 1);
+		}
 	}
 
 	free(send);
@@ -148,7 +89,7 @@ static BoundaryComm* init_comm(Array* a){
 }
 
 
-static void free_comm(BoundaryComm* c){
+void free_comm(BoundaryComm* c){
 
 	int i;
 
@@ -170,20 +111,83 @@ static void free_comm(BoundaryComm* c){
 	free(c->recv_count);
 
 	free(c);
+
+	//pprintf("fe\n");
 }
+
+// Only visible inside this file
+void send(Field* f, Array* a, BoundaryComm* c){
+
+	int i, j, *k;
+
+	k = (int *) malloc(sizeof(int) * host.np);
+
+	for(i=0;i<host.np;i++) k[i]=0;
+
+	MPI_Request * send_ptr = c->send;
+	MPI_Request * recv_ptr = c->recv;
+
+	// copy to buffer
+	for(i=0;i<a->x_local;i++){
+		for(j=0;j<3;j++){
+			if(a->neighbour[i][j] < host.rank*a->x_local || a->neighbour[i][j] >= (host.rank+1)*a->x_local){
+				c->buffer_send[a->neighbour[i][j]/a->x_local][k[a->neighbour[i][j]/a->x_local]] = f->value[i];
+				k[a->neighbour[i][j]/a->x_local]++;
+			}
+		}
+	}
+
+	for(i=0;i<host.np;i++){
+		if(host.rank !=i){
+			MPI_Isend(c->buffer_send[i], c->send_count[i], MPI_INT, i, 100*host.rank, MPI_COMM_WORLD, send_ptr);
+			send_ptr++;
+			MPI_Irecv(c->buffer_recv[i], c->recv_count[i], MPI_INT, i, 100*i, MPI_COMM_WORLD, recv_ptr);
+			recv_ptr++;
+		}
+	}
+
+	free(k);
+
+	MPI_Waitall(host.np-1, c->send, c->send_status);
+	MPI_Waitall(host.np-1, c->recv, c->recv_status);
+
+}
+
+
+
+void unpack(Field* f, Array* a, BoundaryComm* c){
+
+	int i, j;
+
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	for(i=0;i<host.np;i++){
+		for(j=0;j<c->recv_count[i];j++){
+				f->halo[i][j] = c->buffer_recv[i][j];
+		}
+	}
+	MPI_Barrier(MPI_COMM_WORLD);
+}
+
+
+
+
 
 
 // Can be called from outside file
 
 
-void send_boundary_data(Field* f, Array* a){
+void send_boundary_data(Field* f, Array* a, BoundaryComm * comm){
 
-	BoundaryComm* comm = init_comm(a);
+	
+
+	printf("1\n");
 
 	send(f, a, comm);
+//printf("2\n");
 
 	unpack(f, a, comm);
-
-	free_comm(comm);
-
+//printf("3\n");
+	
+//printf("4\n");
 }

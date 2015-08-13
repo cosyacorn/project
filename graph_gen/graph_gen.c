@@ -162,8 +162,10 @@ int main(int argc, char * argv[]){
 	time_taken = (double)(end - begin)/CLOCKS_PER_SEC;	
 	
 	//print graph
-	for(i=0;i<num_nodes;i++){
-		printf("%d;%d,%d,%d\n", i, a[i][0], a[i][1], a[i][2]);
+	if(num_nodes<10){
+		for(i=0;i<num_nodes;i++){
+			printf("%d;%d,%d,%d\n", i, a[i][0], a[i][1], a[i][2]);
+		}
 	}
 
 	printf("Time to execute: %f\n", time_taken);

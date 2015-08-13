@@ -18,9 +18,9 @@ int main(int argc, char * argv[]){
 	Array *a, *b;
 	Field *f_a, *f_b;
 
-	num_nodes=100;
+	num_nodes=3200;
 	beta=0.001;
-	num_updates=10000;
+	num_updates=100;
 
 	MPI_Init(&argc,&argv);
 
