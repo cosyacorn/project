@@ -83,6 +83,7 @@ static BoundaryComm* init_comm(Array* a){
 	MPI_Waitall(host.np-1, send, send_status);
 	MPI_Waitall(host.np-1, recv, recv_status);
 
+
 	c->buffer_recv = (int **) malloc(sizeof(int *) * host.np);
 
 	for(i=0;i<host.np;i++){
@@ -92,6 +93,7 @@ static BoundaryComm* init_comm(Array* a){
 			c->buffer_recv[i] = NULL;
 		}
 	}
+
 
 	free(send);
 	free(send_status);
@@ -139,15 +141,48 @@ static void send(Field* f, Array* a, BoundaryComm* c){
 	MPI_Request * send_ptr = c->send;
 	MPI_Request * recv_ptr = c->recv;
 
+//	printf("about to copy\n");
+
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	for(i=0;i<host.np;i++){
+		pprintf("send count %d\n", c->send_count[i]);
+		MPI_Barrier(MPI_COMM_WORLD);
+	}
+
+
 	// copy to buffer
 	for(i=0;i<a->x_local;i++){
+		pprintf("i=%d\n", i);
+		MPI_Barrier(MPI_COMM_WORLD);
 		for(j=0;j<3;j++){
+		pprintf("j = %d k=%d count=%d a->neighbour[i][j] = %d\n", j, k[a->neighbour[i][j]/a->x_local], c->send_count[a->neighbour[i][j]/a->x_local], a->neighbour[i][j]);
+		MPI_Barrier(MPI_COMM_WORLD);
+			if(k[a->neighbour[i][j]/a->x_local] > c->send_count[a->neighbour[i][j]/a->x_local]){
+				pprintf("ALARM!! k=%d count=%d\n", k[a->neighbour[i][j]/a->x_local], c->send_count[a->neighbour[i][j]/a->x_local]);
+				MPI_Barrier(MPI_COMM_WORLD);
+			}
+
 			if(a->neighbour[i][j] < host.rank*a->x_local || a->neighbour[i][j] >= (host.rank+1)*a->x_local){
 				c->buffer_send[a->neighbour[i][j]/a->x_local][k[a->neighbour[i][j]/a->x_local]] = f->value[i];
-				k[a->neighbour[i][j]/a->x_local]++;
+				if(host.rank==0){ printf("k1=%d, k2=%d, k3=%d\n", k[1], k[2], k[3]);}
+
+				if(k[a->neighbour[i][j]/a->x_local] < c->send_count[a->neighbour[i][j]/a->x_local]-1)
+					k[a->neighbour[i][j]/a->x_local]++;
+				
 			}
+		MPI_Barrier(MPI_COMM_WORLD);
 		}
+		
 	}
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	pprintf("done copy\n");
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	
+
+	
 
 	for(i=0;i<host.np;i++){
 		if(host.rank !=i){
@@ -158,6 +193,10 @@ static void send(Field* f, Array* a, BoundaryComm* c){
 		}
 	}
 
+	MPI_Barrier(MPI_COMM_WORLD);
+	pprintf("got to here 2!\n");
+	MPI_Barrier(MPI_COMM_WORLD);
+
 	free(k);
 
 	MPI_Waitall(host.np-1, c->send, c->send_status);
@@ -167,11 +206,10 @@ static void send(Field* f, Array* a, BoundaryComm* c){
 
 static void unpack(Field* f, Array* a, BoundaryComm* c){
 
-	int i, j;
-
-	MPI_Barrier(MPI_COMM_WORLD);
+	int i, j;	
 
 	for(i=0;i<host.np;i++){
+		MPI_Barrier(MPI_COMM_WORLD);
 		for(j=0;j<c->recv_count[i];j++){
 				f->halo[i][j] = c->buffer_recv[i][j];
 		}
@@ -190,7 +228,11 @@ void send_boundary_data(Field* f, Array* a){
 
 	send(f, a, comm);
 	pprintf("sent\n");
+	MPI_Barrier(MPI_COMM_WORLD);
 	unpack(f, a, comm);
 	pprintf("received\n");
+	MPI_Barrier(MPI_COMM_WORLD);
 	free_comm(comm);
+	pprintf("freed\n");
+	MPI_Barrier(MPI_COMM_WORLD);
 }

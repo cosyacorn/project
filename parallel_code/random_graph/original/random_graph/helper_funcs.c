@@ -79,42 +79,30 @@ void update_one_field(int size, Field *f_a, Field *f_b, double beta, Array *a){
 	int spin[3];
 	double r, n;
 
-//	pprintf("in update one field %d\n", host.rank);
-//	MPI_Barrier(MPI_COMM_WORLD);
-	//pprintf("f->halo count 0 = %d\n", f_b->halo_count[0]);
-	//MPI_Barrier(MPI_COMM_WORLD);
+	// PROBLEM AREA BELOW //
 
-
-
-
-
-// problem //
+	// loop over points in local array
 	for(i=0;i<size;i++){
+		// loop over neighbours
 		for(j=0;j<3;j++){
-			//pprintf("a->neighbour[i][j]= %d\nhost.rank*size = %d\n(host.rank+1)*size = %d\n", a->neighbour[i][j], host.rank*size, (host.rank+1)*size);
+			// determine if neighbour is local or on another proc
+			// if on other proc then copy to halo
 			if(a->neighbour[i][j] < host.rank*size || a->neighbour[i][j] >= (host.rank+1)*size){
 				// set spin1 to halo
-				k=0;				
-				index[j] = a->neighbour[i][j]/size;
-				//if(host.rank==0) printf("neighbour %d index %d\n", a->neighbour[i][j], index[j]);
+				k=0; // set index to zero		
+				index[j] = a->neighbour[i][j]/size; // first index determines the rank of proc
+				// spin will be set to zero once used so looking for first nonzero value
 				while(f_b->halo[index[j]][k] == 0){
 					k++;
 				}
-				//if(host.rank==0) pprintf("k = %d\n", k);
-				spin[j] = f_b->halo[index[j]][k];
-				f_b->halo[index[j]][k] = 0;
-			} else {
-				// DEBUGGING HERE
-				//if (host.rank != 0) {
-				//	printf("a->neighbour[i][j] = %d\n", a->neighbour[i][j]);
-				///printf("f_b= %p\n", f_b);
-				//	printf("f_b->value[a->neighbour[i][j]] = %d\n", f_b->value[a->neighbour[i][j]%size]);
-					//printf("spin[j] = %d\n", spin[j]);
-				//}
-
+				spin[j] = f_b->halo[index[j]][k]; // set spin to halo
+				f_b->halo[index[j]][k] = 0; // mark as used
+			} else { // if local ...
 				spin[j] = f_b->value[a->neighbour[i][j]%size];
 			}
 		}
+
+		// determine hamiltonian and do proposal etc..
 		ham = hamiltonian_local(f_a->value[i], spin[0], spin[1], spin[2]);
 		prop = -1*f_a->value[i];
 		new_ham = hamiltonian_local(prop, spin[0], spin[1], spin[2]);
