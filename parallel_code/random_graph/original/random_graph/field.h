@@ -7,5 +7,6 @@ typedef struct
 Field;
 
 Field* init_field(Array* a);
+void set_up_halo(Field *f_a, Field *f_b, Array *a);
 void free_field(Field* f);
 //void write_field(char *, Field*, Array*);

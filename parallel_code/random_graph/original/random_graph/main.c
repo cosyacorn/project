@@ -48,14 +48,21 @@ int main(int argc, char * argv[]){
 	f_a = init_field(a); 
 	f_b = init_field(b);
 
-	for(i=0;i<b->x_local;i++){
-		if(host.rank==0){
-			printf("f val main = %d\n", f_b->value[i]);
-		}
-	}
+	set_up_halo(f_a, f_b, a);
+	set_up_halo(f_b, f_a, b);
+
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	
+	send_boundary_data(f_b, a);
+
+	//for(i=0;i<b->x_local;i++){
+	//	if(host.rank==0){
+	//		printf("f val main = %d\n", f_b->value[i]);
+	//	}
+	//}
+	//MPI_Barrier(MPI_COMM_WORLD);
+
+/*	
 	pprintf("%Zentering first send\n");
 	MPI_Barrier(MPI_COMM_WORLD);
 	send_boundary_data(f_a, a); // send halo data on A
@@ -69,17 +76,17 @@ int main(int argc, char * argv[]){
 
 	t1 = MPI_Wtime();
 
-
-	pprintf("Entering update\n");
+*/
+//	pprintf("Entering update\n");
 
 //	for(i=0;i<num_updates;i++)
-		update(size, f_a, f_b, beta, a, b); // do one update step
+//		update(size, f_a, f_b, beta, a, b); // do one update step
 
-	pprintf("exiting updates\n");
+//	pprintf("exiting updates\n");
 
-	t2 = MPI_Wtime();
+//	t2 = MPI_Wtime();
 
-	pprintf("%Ztotal time taken: %lf\n", t2-t1);
+//	pprintf("%Ztotal time taken: %lf\n", t2-t1);
 	
 	// write results to file
 /*	if(host.rank==0){
@@ -123,7 +130,7 @@ int main(int argc, char * argv[]){
 	free_graph(b_graph, num_nodes);
 
 //	pprintf("all frees done, mpi finalise\n");
-//	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
 
 	// finish parallel
 	MPI_Finalize();

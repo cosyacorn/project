@@ -92,9 +92,11 @@ void update_one_field(int size, Field *f_a, Field *f_b, double beta, Array *a){
 				k=0; // set index to zero		
 				index[j] = a->neighbour[i][j]/size; // first index determines the rank of proc
 				// spin will be set to zero once used so looking for first nonzero value
-				while(f_b->halo[index[j]][k] == 0){
+				while(f_b->halo[index[j]][k] == 0 && k < f_b->halo_count[host.rank]){
 					k++;
 				}
+// DEBUG
+printf("rank = %d; k = %d; f_b->halo_count[index[j]] = %d\n", host.rank, k, f_b->halo_count[host.rank]);
 				spin[j] = f_b->halo[index[j]][k]; // set spin to halo
 				f_b->halo[index[j]][k] = 0; // mark as used
 			} else { // if local ...

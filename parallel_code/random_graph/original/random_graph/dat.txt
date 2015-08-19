@@ -1,0 +1,309 @@
+entering first send
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+second send incoming
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+exited first send
+P0:Entering update
+P2:Entering update
+P3:Entering update
+P1:Entering update
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+P0:exiting updates
+P3:exiting updates
+P2:exiting updates
+P1:exiting updates
+total time taken: 0.040163
+entering first send
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+second send incoming
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+exited first send
+P0:Entering update
+P2:Entering update
+P3:Entering update
+P1:Entering update
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+P0:exiting updates
+P1:exiting updates
+P2:exiting updates
+P3:exiting updates
+total time taken: 0.044026
+entering first send
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+second send incoming
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+exited first send
+P0:Entering update
+P1:Entering update
+P2:Entering update
+P3:Entering update
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+P0:exiting updates
+P1:exiting updates
+P3:exiting updates
+P2:exiting updates
+total time taken: 0.044218
+entering first send
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+second send incoming
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+exited first send
+P0:Entering update
+P1:Entering update
+P2:Entering update
+P3:Entering update
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+P0:exiting updates
+P1:exiting updates
+P3:exiting updates
+P2:exiting updates
+total time taken: 0.043984
+entering first send
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+second send incoming
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+exited first send
+P0:Entering update
+P1:Entering update
+P2:Entering update
+P3:Entering update
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+P0:exiting updates
+P1:exiting updates
+P3:exiting updates
+P2:exiting updates
+total time taken: 0.042047
+entering first send
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+second send incoming
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+exited first send
+P0:Entering update
+P1:Entering update
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+P0:exiting updates
+P1:exiting updates
+total time taken: 0.024367
+entering first send
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+second send incoming
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+exited first send
+P0:Entering update
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+going into loop
+exiting loop
+sends and recvs
+sends and recvs1
+sends and recvs2
+sent
+received
+freed
+P0:exiting updates
+total time taken: 0.012976
+-------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code.. Per user-direction, the job has been aborted.
+-------------------------------------------------------
+--------------------------------------------------------------------------
+mpirun detected that one or more processes exited with non-zero status, thus causing
+the job to be terminated. The first process to do so was:
+
+  Process name: [[14417,1],0]
+  Exit code:    1
+--------------------------------------------------------------------------

@@ -8,7 +8,6 @@ int main(){
 	int i;
 
 
-	if(
 	b[0]=0;
 	b[1]=1;
 
