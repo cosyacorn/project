@@ -5,7 +5,7 @@ int main(){
 
 	int ** a = (int **) malloc(sizeof(int *)*2);
 	int b[2];
-	int i;
+	int i, j;
 
 
 	b[0]=0;
@@ -21,7 +21,10 @@ int main(){
 
 	a[1][0] = 123;
 
-	printf("%d\n", a[1][0]);
+	for(i=0;i<2;i++)
+		for(j;j<b[i];j++)
+			printf("%d\n", a[i][j]);
+
 
 	for(i=0;i<2;i++)
 		free(a[i]);
