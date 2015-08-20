@@ -18,24 +18,8 @@ void send_boundary_data(Field* f_b, Array* a){
 
 	int upper_lim, lower_lim;
 
-	MPI_Request *send = (MPI_Request *) malloc(sizeof(MPI_Request) * (host.np-1));	
-	MPI_Request *recv = (MPI_Request *) malloc(sizeof(MPI_Request) * (host.np-1));
-
-	MPI_Status  *send_status = (MPI_Status *) malloc(sizeof(MPI_Status) * (host.np-1));
-	MPI_Status  *recv_status = (MPI_Status *) malloc(sizeof(MPI_Status) * (host.np-1));
-
-	MPI_Request * send_ptr = send;
-	MPI_Request * recv_ptr = recv;
-	
-	MPI_Request * send2 = (MPI_Request *) malloc(sizeof(MPI_Request) * (host.np-1));
-	MPI_Request * recv2 = (MPI_Request *) malloc(sizeof(MPI_Request) * (host.np-1));
-
-	MPI_Status * send_status2 = (MPI_Status *) malloc(sizeof(MPI_Status) * (host.np-1));
-	MPI_Status * recv_status2 = (MPI_Status *) malloc(sizeof(MPI_Status) * (host.np-1));
-
-	MPI_Request * send_ptr2 = send2;
-	MPI_Request * recv_ptr2 = recv2; 
-
+	int *throw, *catch, *send_offset_array, *recv_offset_array;
+	int throw_size, catch_size, send_offset, recv_offset;
 
 	// init
 	//determine how many to be sent to each process
@@ -81,20 +65,8 @@ void send_boundary_data(Field* f_b, Array* a){
 		recv_count[i]=0;
 
 	// match send counts and recv counts
-	for(i=0;i<host.np;i++){
-		if(host.rank != i){
-			MPI_Isend(&send_count[i], 1, MPI_INT, i, 100*host.rank, MPI_COMM_WORLD, send_ptr);
-			send_ptr++;
-			MPI_Irecv(&recv_count[i], 1, MPI_INT, i, 100*i, MPI_COMM_WORLD, recv_ptr);
-			recv_ptr++;
-		}
-	}
 
-	MPI_Waitall(host.np-1, send, send_status);
-	MPI_Waitall(host.np-1, recv, recv_status);
-
-
-	// send
+	MPI_Alltoall(send_count, 1, MPI_INT, recv_count, 1, MPI_INT, MPI_COMM_WORLD);
 
 	k = (int *) malloc(sizeof(int) * host.np);
 
@@ -134,44 +106,62 @@ void send_boundary_data(Field* f_b, Array* a){
 		}
 	}
 
-	// send send buffer and recv it in the recv buffer
+	//pprintf("everything is awesome\n");
+
+
+	throw_size = 0;
+	catch_size = 0;
+	send_offset = 0;
+	recv_offset = 0;
+
 	for(i=0;i<host.np;i++){
-		if(host.rank !=i){
-			MPI_Isend(&buffer_send[i][0], send_count[i], MPI_INT, i, 100*host.rank, MPI_COMM_WORLD, send_ptr2);
-			send_ptr2++;
-			MPI_Irecv(&buffer_recv[i][0], recv_count[i], MPI_INT, i, 100*i, MPI_COMM_WORLD, recv_ptr2);
-			recv_ptr2++;
+		throw_size += send_count[i];
+		catch_size += recv_count[i];
+	}
+
+	throw = (int*) malloc(sizeof(int) * throw_size);
+	catch = (int*) malloc(sizeof(int) * catch_size);
+
+	send_offset_array = (int*) malloc(sizeof(int) * host.np);
+	recv_offset_array = (int*) malloc(sizeof(int) * host.np);
+
+	for(i=0;i<host.np;i++){
+		send_offset_array[i] = send_offset;
+		recv_offset_array[i] = recv_offset;
+		for(j=0;j<send_count[i];j++){
+			throw[j+send_offset] = buffer_send[i][j];
+		}
+		send_offset += send_count[i];
+		recv_offset += recv_count[i];
+	}
+
+	//MPI_Barrier(MPI_COMM_WORLD);
+
+	MPI_Alltoallv(throw, send_count, send_offset_array, MPI_INT, catch, recv_count, recv_offset_array, MPI_INT, MPI_COMM_WORLD);
+
+	//MPI_Barrier(MPI_COMM_WORLD);
+
+	//pprintf("catch %d; f_b->halo_count[0] = %d; recv_count[0] = %d\n", catch_size, f_b->halo_count[0], recv_count[0]);
+	
+
+//	for(i=0;i<host.np;i++)
+//		for(j=0;j<recv_count[i];j++)
+	//		pprintf("j+recv_offset_array[i] = %d\n", j+recv_offset_array[i]);
+
+
+//	pprintf("sizeof f halo = %d\n", sizeof(f_b->halo[0][1]));
+
+	for(i=0;i<host.np;i++){
+		for(j=0;j<f_b->halo_count[i];j++){
+			pprintf("f_b->halo %d %d = %d\ncatch] = %d\n", i, j, f_b->halo[i][j], catch[j+recv_offset_array[i]]);
+			f_b->halo[i][j] = catch[j+recv_offset_array[i]];
 		}
 	}
 
-	MPI_Waitall(host.np-1, send2, send_status2);
-	MPI_Waitall(host.np-1, recv2, recv_status2);
-
-	//if(host.rank == 0) printf("send %d\n", c->send_count[0]);
-
-//	if(host.rank == 1) printf("recv %d\n", c->recv_count[1]);
-
-	// unpack
-
-	for(i=0;i<host.np;i++){
-		for(j=0;j<recv_count[i];j++){
-			f_b->halo[i][j] = buffer_recv[i][j];
-		}
-	}
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	free(k);
-
-	free(send);
-	free(send_status);
-	free(recv);
-	free(recv_status);
-
-	free(send2);
-	free(send_status2);
-	free(recv2);
-	free(recv_status2);
 
 	for(i=0;i<host.np;i++){
 		free(buffer_send[i]);
@@ -183,4 +173,9 @@ void send_boundary_data(Field* f_b, Array* a){
 
 	free(send_count);
 	free(recv_count);
+
+	free(throw);
+	free(catch);
+	free(send_offset_array);
+	free(recv_offset_array);
 }

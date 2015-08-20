@@ -43,8 +43,11 @@ void set_up_halo(Field *f_a, Field *f_b, Array *a){
 
 	for(i=0;i<a->x_local;i++){
 		for(j=0;j<3;j++){
-			if(a->neighbour[i][j] < host.rank*a->x_local || a->neighbour[i][j] >= (host.rank+1)*a->x_local)
+		//	pprintf("a->neighbour[i][j] = %d; host.rank*a->x_local = %d; (host.rank+1)*a->x_local = %d\n", a->neighbour[i][j], host.rank*a->x_local, (host.rank+1)*a->x_local);
+			if(a->neighbour[i][j] < host.rank*a->x_local || a->neighbour[i][j] >= (host.rank+1)*a->x_local){
 				f_a->halo_count[a->neighbour[i][j]/a->x_local]++;
+//				printf("YES\n");
+			}
 		}
 	}
 
@@ -61,9 +64,12 @@ void set_up_halo(Field *f_a, Field *f_b, Array *a){
 	for(i=0;i<host.np;i++){
 		for(j=0;j<f_a->halo_count[i];j++){
 			f_b->halo[i][j]=0;
+			if(host.rank==0 && i==2 && j==3) printf("this guy %d\n", f_b->halo[i][j]);
 		}
 	}	
 
+//	pprintf("FIELD val %d\n", f_a->value[0]++);
+//	printf("f halo val field = %d\n", f_b->halo_count[0]);
 }
 
 void free_field(Field* f){

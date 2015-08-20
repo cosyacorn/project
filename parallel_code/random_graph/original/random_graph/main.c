@@ -20,7 +20,7 @@ int main(int argc, char * argv[]){
 	Array *a, *b;
 	Field *f_a, *f_b;
 
-	num_nodes=32;
+	num_nodes=16;
 	beta=0.001;
 	num_updates=10;
 	num_swaps=2000;
@@ -50,6 +50,10 @@ int main(int argc, char * argv[]){
 
 	set_up_halo(f_a, f_b, a);
 	set_up_halo(f_b, f_a, b);
+
+//	pprintf("f val %d\n", f_a->value[0]);
+
+//	printf("f halo val main = %d\n", f_b->halo_count[0]);
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
