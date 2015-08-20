@@ -20,10 +20,10 @@ int main(int argc, char * argv[]){
 	Array *a, *b;
 	Field *f_a, *f_b;
 
-	num_nodes=16;
+	num_nodes=320;
 	beta=0.001;
 	num_updates=10;
-	num_swaps=2000;
+	num_swaps=20000;
 
 	MPI_Init(&argc,&argv);
 
@@ -58,6 +58,7 @@ int main(int argc, char * argv[]){
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	send_boundary_data(f_b, a);
+	send_boundary_data(f_a, b);
 
 	//for(i=0;i<b->x_local;i++){
 	//	if(host.rank==0){

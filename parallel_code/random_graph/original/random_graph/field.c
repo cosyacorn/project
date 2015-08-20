@@ -55,7 +55,7 @@ void set_up_halo(Field *f_a, Field *f_b, Array *a){
 
 	for(i=0;i<host.np;i++){
 		if(f_a->halo_count[i] != 0){
-			f_b->halo[i] = (int *) malloc(sizeof(int) * f_a->halo_count[i]);
+			f_b->halo[i] = (int *) malloc(sizeof(int) * f_a->halo_count[i]); // valgrind says prob
 		} else {
 			f_b->halo[i] = NULL;
 		}
@@ -64,12 +64,18 @@ void set_up_halo(Field *f_a, Field *f_b, Array *a){
 	for(i=0;i<host.np;i++){
 		for(j=0;j<f_a->halo_count[i];j++){
 			f_b->halo[i][j]=0;
-			if(host.rank==0 && i==2 && j==3) printf("this guy %d\n", f_b->halo[i][j]);
+			//printf("this guy %d\n", f_b->halo[i][j]);
 		}
-	}	
-
+	}
+/*
+	for(i=0;i<host.np;i++)
+		for(j=0;j<f_a->halo_count[i];j++)
+			pprintf("FIELD.C: f_b->halo %d %d = %d\n", i, j, f_b->halo[i][j]);
+*/
 //	pprintf("FIELD val %d\n", f_a->value[0]++);
-//	printf("f halo val field = %d\n", f_b->halo_count[0]);
+
+// this send count is correct
+//	for(i=0;i<host.np;i++) pprintf("malloc'd space for send to %d =  %d\n", i, f_a->halo_count[i]); 
 }
 
 void free_field(Field* f){
