@@ -43,10 +43,8 @@ void set_up_halo(Field *f_a, Field *f_b, Array *a){
 
 	for(i=0;i<a->x_local;i++){
 		for(j=0;j<3;j++){
-		//	pprintf("a->neighbour[i][j] = %d; host.rank*a->x_local = %d; (host.rank+1)*a->x_local = %d\n", a->neighbour[i][j], host.rank*a->x_local, (host.rank+1)*a->x_local);
 			if(a->neighbour[i][j] < host.rank*a->x_local || a->neighbour[i][j] >= (host.rank+1)*a->x_local){
 				f_a->halo_count[a->neighbour[i][j]/a->x_local]++;
-//				printf("YES\n");
 			}
 		}
 	}
@@ -55,7 +53,7 @@ void set_up_halo(Field *f_a, Field *f_b, Array *a){
 
 	for(i=0;i<host.np;i++){
 		if(f_a->halo_count[i] != 0){
-			f_b->halo[i] = (int *) malloc(sizeof(int) * f_a->halo_count[i]); // valgrind says prob
+			f_b->halo[i] = (int *) malloc(sizeof(int) * f_a->halo_count[i]);
 		} else {
 			f_b->halo[i] = NULL;
 		}
@@ -64,23 +62,12 @@ void set_up_halo(Field *f_a, Field *f_b, Array *a){
 	for(i=0;i<host.np;i++){
 		for(j=0;j<f_a->halo_count[i];j++){
 			f_b->halo[i][j]=0;
-			//printf("this guy %d\n", f_b->halo[i][j]);
 		}
 	}
-/*
-	for(i=0;i<host.np;i++)
-		for(j=0;j<f_a->halo_count[i];j++)
-			pprintf("FIELD.C: f_b->halo %d %d = %d\n", i, j, f_b->halo[i][j]);
-*/
-//	pprintf("FIELD val %d\n", f_a->value[0]++);
 
-// this send count is correct
-//	for(i=0;i<host.np;i++) pprintf("malloc'd space for send to %d =  %d\n", i, f_a->halo_count[i]); 
 }
 
 void free_field(Field* f){
-
-//	pprintf("in free field\n");
 
 	int i;
 

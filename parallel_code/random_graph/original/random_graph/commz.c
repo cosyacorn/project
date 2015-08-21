@@ -83,6 +83,7 @@ void send_boundary_data(Field* f_b, Array* a){
 				// copy value into buffer
 				proc = a->neighbour[i][j]/a->x_local;
 				buffer_send[proc][k[proc]] = f_b->value[i];
+				if(host.rank==1) printf("%d %d  comz %d\n",i, j, f_b->value[i]);
 				// increase relavant counter
 				k[proc]++;
 			}
@@ -105,8 +106,6 @@ void send_boundary_data(Field* f_b, Array* a){
 			buffer_recv[i][j]=0;
 		}
 	}
-
-	//pprintf("everything is awesome\n");
 
 	throw_size = 0;
 	catch_size = 0;
@@ -134,53 +133,17 @@ void send_boundary_data(Field* f_b, Array* a){
 		recv_offset += recv_count[i];
 	}
 
-	//for(i=0;i<throw_size;i++)
-	//	if(host.rank==0) printf("throw %d\n", throw[i]);
-
-
-	// this recv count is correct
-//	for(i=0;i<host.np;i++)
-//		pprintf("Recv count from %d = %d\n", i, recv_count[i]);
-	
-
-//	for(i=0;i<host.np;i++)
-		
-	//	pprintf("f_b->halo %d %d = %d\n", i, j, f_b->halo[i][j]);
-	if(host.rank == 0) throw[0] = 1000001;
-	pprintf("throw 0 = %d\n", throw[0]);
-
-	MPI_Barrier(MPI_COMM_WORLD);
+	if(host.rank == 1) printf("throw %d %d %d\n", throw[0], throw[1], throw[2]);
 
 	MPI_Alltoallv(throw, send_count, send_offset_array, MPI_INT, catch, recv_count, recv_offset_array, MPI_INT, MPI_COMM_WORLD);
 
-	MPI_Barrier(MPI_COMM_WORLD);
 
-	pprintf("catch 0 = %d\n", catch[0]);
-
-	//for(i=0;i<catch_size;i++)
-	//	if(host.rank==0) printf("catch %d\n", catch[i]);
-
-	//pprintf("catch %d; f_b->halo_count[0] = %d; recv_count[0] = %d\n", catch_size, f_b->halo_count[0], recv_count[0]);
-	
-
-//	for(i=0;i<host.np;i++)
-//		for(j=0;j<recv_count[i];j++)
-	//		pprintf("j+recv_offset_array[i] = %d\n", j+recv_offset_array[i]);
-
-
-//	pprintf("sizeof f halo = %d\n", sizeof(f_b->halo[0][1]));
 
 	for(i=0;i<host.np;i++){
 		for(j=0;j<send_count[i];j++){
-			
-	//		pprintf("f_b->halo %d %d = %d\ncatch = %d\n", i, j, f_b->halo[i][j], catch[j+recv_offset_array[i]]);
-			f_b->halo[i][j] = catch[j+recv_offset_array[i]]; // valgrind says problem
+			f_b->halo[i][j] = catch[j+recv_offset_array[i]]; 
 		}
 	}
-
-
-
-	MPI_Barrier(MPI_COMM_WORLD);
 
 	free(k);
 

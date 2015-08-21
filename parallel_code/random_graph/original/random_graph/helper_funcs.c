@@ -95,8 +95,6 @@ void update_one_field(int size, Field *f_a, Field *f_b, double beta, Array *a){
 				while(f_b->halo[index[j]][k] == 0 && k < f_b->halo_count[host.rank]){
 					k++;
 				}
-// DEBUG
-printf("rank = %d; k = %d; f_b->halo_count[index[j]] = %d\n", host.rank, k, f_b->halo_count[host.rank]);
 				spin[j] = f_b->halo[index[j]][k]; // set spin to halo
 				f_b->halo[index[j]][k] = 0; // mark as used
 			} else { // if local ...
@@ -124,21 +122,14 @@ printf("rank = %d; k = %d; f_b->halo_count[index[j]] = %d\n", host.rank, k, f_b-
 // update the whole graph
 void update(int size, Field *f_a, Field *f_b, double beta, Array *a, Array *b){
 
-	// update field a first
-//	pprintf("entering update\n");
 	update_one_field(size, f_a, f_b, beta, a);
-//	pprintf("finished one update\nentering send\n");
+
 	send_boundary_data(f_a, a);
-	MPI_Barrier(MPI_COMM_WORLD);
-	//pprintf("exited send\n");
-	MPI_Barrier(MPI_COMM_WORLD);
-	// then update field b
+	
 	update_one_field(size, f_b, f_a, beta, b);
-//	pprintf("update 2done\n");
-	MPI_Barrier(MPI_COMM_WORLD);
+
 	send_boundary_data(f_b, b);
-//	pprintf("exited second update and send\n");
-	MPI_Barrier(MPI_COMM_WORLD);
+
 }
 
 double magnetisation(Field* phi, Array* a){

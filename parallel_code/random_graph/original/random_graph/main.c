@@ -20,10 +20,10 @@ int main(int argc, char * argv[]){
 	Array *a, *b;
 	Field *f_a, *f_b;
 
-	num_nodes=3200;
+	num_nodes=4;
 	beta=0.001;
-	num_updates=10;
-	num_swaps=20000;
+	num_updates=0;
+	num_swaps=0;
 
 	MPI_Init(&argc,&argv);
 
@@ -35,6 +35,43 @@ int main(int argc, char * argv[]){
 	// create graph
 	a_graph = make_graph(num_nodes); // assign points in set A
 	b_graph = make_graph(num_nodes);	// assign points in set B
+
+	a_graph[0][0] = 0;
+	a_graph[0][1] = 1;
+	a_graph[0][2] = 3;
+
+	a_graph[1][0] = 1;
+	a_graph[1][1] = 2;
+	a_graph[1][2] = 3;
+
+	a_graph[2][0] = 0;
+	a_graph[2][1] = 2;
+	a_graph[2][2] = 3;
+
+	a_graph[3][0] = 0;
+	a_graph[3][1] = 1;
+	a_graph[3][2] = 2;
+
+
+	b_graph[0][0] = 0;
+	b_graph[0][1] = 2;
+	b_graph[0][2] = 3;
+
+	b_graph[1][0] = 0;
+	b_graph[1][1] = 1;
+	b_graph[1][2] = 3;
+
+	b_graph[2][0] = 1;
+	b_graph[2][1] = 2;
+	b_graph[2][2] = 3;
+
+	b_graph[3][0] = 0;
+	b_graph[3][1] = 1;
+	b_graph[3][2] = 2;
+
+
+	print_graph(a_graph, num_nodes);
+//	print_graph(b_graph, num_nodes);
 
 	size = num_nodes/host.np; // num nodes per proc
 
@@ -51,47 +88,40 @@ int main(int argc, char * argv[]){
 	set_up_halo(f_a, f_b, a);
 	set_up_halo(f_b, f_a, b);
 
-//	pprintf("f val %d\n", f_a->value[0]);
+	if(host.rank == 0)
+		printf("a halo count = %d\n", f_a->halo_count[1]);
 
-//	printf("f halo val main = %d\n", f_b->halo_count[0]);
+	if(host.rank==1){
+		f_b->value[1]+=10;
+		printf("point 3 on b %d\n", f_b->value[1]);
+	}
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	send_boundary_data(f_b, a);
-	send_boundary_data(f_a, b);
+	//send_boundary_data(f_a, b);
 
-	//for(i=0;i<b->x_local;i++){
-	//	if(host.rank==0){
-	//		printf("f val main = %d\n", f_b->value[i]);
-	//	}
-	//}
-	//MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
+	if(host.rank==1) printf("fb 3 val = %d\n", f_b->value[1]);
 
-/*	
-	pprintf("%Zentering first send\n");
-	MPI_Barrier(MPI_COMM_WORLD);
-	send_boundary_data(f_a, a); // send halo data on A
-	MPI_Barrier(MPI_COMM_WORLD);
-	pprintf("%Zsecond send incoming\n");
-	MPI_Barrier(MPI_COMM_WORLD);
-	send_boundary_data(f_b, b); // send halo data on B
-	MPI_Barrier(MPI_COMM_WORLD);
-	pprintf("%Zexited first send\n");
-	MPI_Barrier(MPI_COMM_WORLD);
+	if(host.rank==0) printf("fb 3 val on halo = %d %d %d\n", f_b->halo[1][0], f_b->halo[1][1], f_b->halo[1][2]);
 
 	t1 = MPI_Wtime();
 
-*/
-//	pprintf("Entering update\n");
+	//for(beta=0.01;beta<1.00;beta+=0.01){
+		avg=0.0;
+		for(i=0;i<num_updates;i++){
+			update(size, f_a, f_b, beta, a, b); 
+			avg += magnetisation(f_a,a) + magnetisation(f_b,b);
+		}
 
-//	for(i=0;i<num_updates;i++)
-//		update(size, f_a, f_b, beta, a, b); // do one update step
+	//	pprintf("%Zbeta: %lf; avg magnetisation: %lf\n",beta,avg/(double) num_updates);
+	//}
 
-//	pprintf("exiting updates\n");
 
-//	t2 = MPI_Wtime();
+	t2 = MPI_Wtime();
 
-//	pprintf("%Ztotal time taken: %lf\n", t2-t1);
+	//pprintf("%Ztotal time taken: %lf\n", t2-t1);
 	
 	// write results to file
 /*	if(host.rank==0){
@@ -117,25 +147,14 @@ int main(int argc, char * argv[]){
 
 	// clean up
 
-//	pprintf("free fields\n");
-//	MPI_Barrier(MPI_COMM_WORLD);
 	free_field(f_a);
 	free_field(f_b);
-
-//	pprintf("free arrays\n");
-//	MPI_Barrier(MPI_COMM_WORLD);
 
 	free_array(a);
 	free_array(b);
 
-//	pprintf("free graphs\n");
-//	MPI_Barrier(MPI_COMM_WORLD);
-
 	free_graph(a_graph, num_nodes);
 	free_graph(b_graph, num_nodes);
-
-//	pprintf("all frees done, mpi finalise\n");
-	MPI_Barrier(MPI_COMM_WORLD);
 
 	// finish parallel
 	MPI_Finalize();

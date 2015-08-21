@@ -136,6 +136,7 @@ static void send(Field* f_b, Array* a, BoundaryComm* c){
 				proc = a->neighbour[i][j]/a->x_local;
 				c->buffer_send[proc][k[proc]] = f_b->value[i];
 				// increase relavant counter
+				if(host.rank == 1 && k[0]==0) printf("loc %d; index %d; neighbour %d; fb val %d\n",i, j, a->neighbour[i][j], f_b->value[i]);
 				k[proc]++;
 			}
 		}
@@ -190,18 +191,20 @@ static void unpack(Field* f_b, Array* a, BoundaryComm* c){
 
 	int i, j;	
 
-	for(i=0;i<host.np;i++)
-		pprintf("send count to; recv count; halo count: %d %d %d\n", c->send_count[i], c->recv_count[i], f_b->halo_count[i]);
+//	for(i=0;i<host.np;i++)
+//		pprintf("send count to; recv count; halo count: %d %d %d\n", c->send_count[i], c->recv_count[i], f_b->halo_count[i]);
 
 
 	for(i=0;i<host.np;i++){
 		for(j=0;j<c->recv_count[i];j++){
 			if(c->send_count[i] != 0){
-
 				f_b->halo[i][j] = c->buffer_recv[i][j];
 			}
 		}
 	}
+
+	if( host.rank==0)
+		printf(" halo recieved from 1: %d %d %d\n", f_b->halo[1][0], f_b->halo[1][1], f_b->halo[1][1]);
 
 	for(i=0;i<host.np;i++){
 		
