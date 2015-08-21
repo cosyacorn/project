@@ -3,7 +3,7 @@ CFLAGS=-O0 -g
 INCS=machine.h array.h field.h comms.h helper_funcs.h swap_alg.h
 LIBS=-lm
 
-OBJS= machine.o array.o field.o commz.o helper_funcs.o swap_alg.o
+OBJS= machine.o array.o field.o comms.o helper_funcs.o swap_alg.o
 
 # Run ising with (eg) mpirun -np 8 1000 1000 4 2 
 double_ring: main.c $(INCS) $(OBJS)
@@ -18,8 +18,8 @@ array.o: array.c $(INCS)
 field.o: field.c $(INCS)
 	$(CC) $(CFLAGS) -c field.c
 
-commz.o: commz.c $(INCS)
-	$(CC) $(CFLAGS) -c commz.c
+comms.o: comms.c $(INCS)
+	$(CC) $(CFLAGS) -c comms.c
 
 helper_funcs.o: helper_funcs.c $(INCS)
 	$(CC) $(CFLAGS) -c helper_funcs.c

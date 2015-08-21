@@ -191,13 +191,15 @@ static void unpack(Field* f_b, Array* a, BoundaryComm* c){
 	int i, j;	
 
 	for(i=0;i<host.np;i++)
-		pprintf("recv count %d; halo count %d\n", c->recv_count[i], f_b->halo_count[i]);
+		pprintf("send count to; recv count; halo count: %d %d %d\n", c->send_count[i], c->recv_count[i], f_b->halo_count[i]);
 
 
 	for(i=0;i<host.np;i++){
 		for(j=0;j<c->recv_count[i];j++){
-			if(c->recv_count[i] != 0)
+			if(c->send_count[i] != 0){
+
 				f_b->halo[i][j] = c->buffer_recv[i][j];
+			}
 		}
 	}
 

@@ -20,7 +20,7 @@ int main(int argc, char * argv[]){
 	Array *a, *b;
 	Field *f_a, *f_b;
 
-	num_nodes=320;
+	num_nodes=3200;
 	beta=0.001;
 	num_updates=10;
 	num_swaps=20000;

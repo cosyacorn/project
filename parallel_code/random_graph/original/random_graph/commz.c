@@ -172,6 +172,7 @@ void send_boundary_data(Field* f_b, Array* a){
 
 	for(i=0;i<host.np;i++){
 		for(j=0;j<send_count[i];j++){
+			
 	//		pprintf("f_b->halo %d %d = %d\ncatch = %d\n", i, j, f_b->halo[i][j], catch[j+recv_offset_array[i]]);
 			f_b->halo[i][j] = catch[j+recv_offset_array[i]]; // valgrind says problem
 		}
