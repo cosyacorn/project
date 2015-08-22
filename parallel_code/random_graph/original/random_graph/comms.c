@@ -24,6 +24,10 @@ typedef struct {
 static BoundaryComm* init_comm(Array* a){
 
 	int i, j;
+	int *double_count;
+
+	double_count = (int *) malloc(sizeof(int) * a->x);
+
 	BoundaryComm *c = malloc(sizeof(BoundaryComm));
 
 	MPI_Request * send = (MPI_Request *) malloc(sizeof(MPI_Request) * (host.np-1));
@@ -39,15 +43,21 @@ static BoundaryComm* init_comm(Array* a){
 
 	c->send_count = (int *) malloc(sizeof(int) * host.np);
 
+	for(i=0;i<a->x;i++)
+		double_count[i]=0;
+
 	for(i=0;i<host.np;i++)
 		c->send_count[i]=0;
 
 	for(i=0;i<a->x_local;i++){
 		// j=3 for trivalent - need to generalise
 		for(j=0;j<3;j++){
-			// determine if neighbour is on a different proc
-			if(a->neighbour[i][j] < host.rank*a->x_local || a->neighbour[i][j] >= (host.rank+1)*a->x_local){
-				c->send_count[a->neighbour[i][j]/a->x_local]++; // increase count if it is on diff proc
+			if(double_count[a->neighbour[i][j]]==0){
+				// determine if neighbour is on a different proc
+				if(a->neighbour[i][j] < host.rank*a->x_local || a->neighbour[i][j] >= (host.rank+1)*a->x_local){
+					c->send_count[a->neighbour[i][j]/a->x_local]++; // increase count if it is on diff proc
+					double_count[a->neighbour[i][j]] = 1;
+				}
 			}
 		}
 	}
@@ -95,6 +105,7 @@ static BoundaryComm* init_comm(Array* a){
 	free(send_status);
 	free(recv);
 	free(recv_status);
+	free(double_count);
 
 	return c; 
 }

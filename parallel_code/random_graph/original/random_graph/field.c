@@ -40,11 +40,20 @@ Field * init_field(Array * a){
 void set_up_halo(Field *f_a, Field *f_b, Array *a){
 
 	int i, j;
+	int *double_count;
+
+	double_count = (int *) malloc(sizeof(int) * a->x);
+
+	for(i=0;i<a->x;i++)
+		double_count[i]=0;
 
 	for(i=0;i<a->x_local;i++){
 		for(j=0;j<3;j++){
-			if(a->neighbour[i][j] < host.rank*a->x_local || a->neighbour[i][j] >= (host.rank+1)*a->x_local){
-				f_a->halo_count[a->neighbour[i][j]/a->x_local]++;
+			if(double_count[a->neighbour[i][j]]==0){
+				if(a->neighbour[i][j] < host.rank*a->x_local || a->neighbour[i][j] >= (host.rank+1)*a->x_local){
+					f_a->halo_count[a->neighbour[i][j]/a->x_local]++;
+					double_count[a->neighbour[i][j]]=1;
+				}
 			}
 		}
 	}
@@ -65,6 +74,7 @@ void set_up_halo(Field *f_a, Field *f_b, Array *a){
 		}
 	}
 
+	free(double_count);
 }
 
 void free_field(Field* f){
