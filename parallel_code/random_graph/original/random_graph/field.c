@@ -49,7 +49,7 @@ void set_up_halo(Field *f_a, Field *f_b, Array *a){
 
 	for(i=0;i<a->x_local;i++){
 		for(j=0;j<3;j++){
-			if(double_count[a->neighbour[i][j]]==0){
+			if( double_count[a->neighbour[i][j]] == 0 ) {
 				if(a->neighbour[i][j] < host.rank*a->x_local || a->neighbour[i][j] >= (host.rank+1)*a->x_local){
 					f_a->halo_count[a->neighbour[i][j]/a->x_local]++;
 					double_count[a->neighbour[i][j]]=1;
@@ -57,6 +57,8 @@ void set_up_halo(Field *f_a, Field *f_b, Array *a){
 			}
 		}
 	}
+
+	//pprintf("HALO COUNT: %d\n", f_a->halo_count[1]);
 
 	f_b->halo = (int **) malloc(sizeof(int *) * host.np);
 

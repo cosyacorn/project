@@ -78,6 +78,7 @@ void update_one_field(int size, Field *f_a, Field *f_b, double beta, Array *a){
 	int index[3];
 	int spin[3];
 	double r, n;
+	int val;
 
 	// PROBLEM AREA BELOW //
 
@@ -91,12 +92,18 @@ void update_one_field(int size, Field *f_a, Field *f_b, double beta, Array *a){
 				// set spin1 to halo
 				k=0; // set index to zero		
 				index[j] = a->neighbour[i][j]/size; // first index determines the rank of proc
-				// spin will be set to zero once used so looking for first nonzero value
-				while(f_b->halo[index[j]][k] == 0 && k < f_b->halo_count[host.rank]){
+				
+				while(f_b->halo[index[j]][k]/2 != a->neighbour[i][j]){
+					val = f_b->halo[index[j]][k]/2;
 					k++;
 				}
-				spin[j] = f_b->halo[index[j]][k]; // set spin to halo
-				f_b->halo[index[j]][k] = 0; // mark as used
+
+				if( val == 0){
+					spin[j] = -1;
+				} else {
+					spin[j] = 1;
+				}
+
 			} else { // if local ...
 				spin[j] = f_b->value[a->neighbour[i][j]%size];
 			}
@@ -126,6 +133,7 @@ void update(int size, Field *f_a, Field *f_b, double beta, Array *a, Array *b){
 
 	send_boundary_data(f_a, a);
 	
+
 	update_one_field(size, f_b, f_a, beta, b);
 
 	send_boundary_data(f_b, b);

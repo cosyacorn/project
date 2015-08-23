@@ -16,7 +16,7 @@ void check_array(Array* a){
 }
 
 
-Array * init_array(int num_local_nodes, int **graph){
+Array * init_array(int num_local_nodes){
 
 	int i, j;
 
@@ -34,7 +34,7 @@ Array * init_array(int num_local_nodes, int **graph){
 
 	for(i=0;i<num_local_nodes;i++){
 		for(j=0;j<3;j++){
-			a->neighbour[i][j]=graph[host.rank * num_local_nodes + i][j];
+			a->neighbour[i][j] = (host.rank*num_local_nodes + i-1+j+a->x)%(a->x);
 		}
 	}
 	check_array(a);

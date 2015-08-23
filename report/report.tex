@@ -6,6 +6,7 @@
 \usepackage{tikz}
 \usepackage{amsmath}
 \usepackage{hyperref}
+\usepackage{algorithm}
  \usepackage{algpseudocode}
 \usetikzlibrary{decorations.pathmorphing}
 \usetikzlibrary{shapes}
@@ -91,9 +92,97 @@ This project is centered around doing Ising Model simulations on random bipartit
 
 \subsubsection{What is the Ising Model?}
 
+The Ising Model is a mathematical model that was invented by Wilhelm Lenz, but developed by Ernst Ising in 1925. It is used to to explore ferromagnetism in statistical physics.
+
 \subsubsection{Analytical tools used for studying the Ising Model}
 
 \subsubsection{How it is normally studied in serial and parallel simulations}
+
+The two dimenstional Ising model is usually represented as a rectangular lattice, sometimes with periodic boundary conditions and sometimes not, depending on the case in question. Each point on the lattice is assigned a spin at the start of the simulation, usually at random. Each point only `feels' the interaction of its nearest neighbours (each point has four neighbours). These interactions allow a Hamiltonian to be calculated for each point.
+
+FILL ABOUT METROPOLIS HASTINGS AND UPDATING POINTS
+
+In parallel we divide the grid up into smaller subgrids. In the figure, the grid is divided into four subgrids but obviously more subdivisions are possible. Normally we have one subgrid per processor that we intend to run the program on. The need for \emph{Message Passing Interface} (MPI) function calls arises from the fact that on the edges of our subgrids there are points needed for the update step whose values are stored on another processor. These values need to be identified and passed to the relevant processor. MPI is used for this task.
+
+%%%%% REGULAR LATTICE ISING PIC %%%%%
+\begin{figure}
+\begin{center}
+\begin{tikzpicture}[scale=1.5]
+
+\node at (-4, -2) {$P0$};
+\node at (4,-2) {$P1$};
+\node at (-4, 2) {$P2$};
+\node at (4,2) {$P3$};
+
+\draw [very thick] (-3,-2.5) -- (3,-2.5);
+\draw [very thick] (-3,-1.5) -- (3,-1.5);
+\draw [very thick] (-3,-0.5) -- (3,-0.5);
+\draw [very thick] (-3,0.5) -- (3,0.5);
+\draw [very thick] (-3,1.5) -- (3,1.5);
+\draw [very thick] (-3,2.5) -- (3,2.5);
+
+\draw [dashed] (-3.5,0) -- (3.5,0);
+\draw [dashed] (0,-3.5) -- (0,3.5);
+
+\draw [very thick] (-2.5,-3) -- (-2.5,3);
+\draw [very thick] (-1.5,-3) -- (-1.5,3);
+\draw [very thick] (-0.5,-3) -- (-0.5,3);
+\draw [very thick] (0.5,-3) -- (0.5,3);
+\draw [very thick] (1.5,-3) -- (1.5,3);
+\draw [very thick] (2.5,-3) -- (2.5,3);
+
+\draw [blue,very thick] (0.25, -0.25) -- (0.25, -0.75) -- (2.75,-0.75) -- (2.75,-0.25) -- (0.25, -0.25);
+\draw [->][blue, very thick] (3.1,-0.5) to [out=60,in=300] (3.1,0.5);
+
+\draw [green,very thick] (0.25, 0.25) -- (0.25, 0.75) -- (2.75,0.75) -- (2.75,0.25) -- (0.25, 0.25);
+\draw [->][green, very thick] (0.1,0.5) to [out=240,in=120] (0.1,-0.5);
+
+\draw [fill=black,very thick] (-2.5,-2.5) circle (3pt);
+\draw [fill=black,very thick] (-1.5,-2.5) circle (3pt);
+\draw [fill=black,very thick] (-0.5,-2.5) circle (3pt);
+\draw [fill=black,very thick] (0.5,-2.5) circle (3pt);
+\draw [fill=black,very thick] (1.5,-2.5) circle (3pt);
+\draw [fill=black,very thick] (2.5,-2.5) circle (3pt);
+
+\draw [fill=black,very thick] (-2.5,-1.5) circle (3pt);
+\draw [fill=black,very thick] (-1.5,-1.5) circle (3pt);
+\draw [fill=black,very thick] (-0.5,-1.5) circle (3pt);
+\draw [fill=black,very thick] (0.5,-1.5) circle (3pt);
+\draw [fill=black,very thick] (1.5,-1.5) circle (3pt);
+\draw [fill=black,very thick] (2.5,-1.5) circle (3pt);
+
+\draw [fill=black,very thick] (-2.5,-0.5) circle (3pt);
+\draw [fill=black,very thick] (-1.5,-0.5) circle (3pt);
+\draw [fill=black,very thick] (-0.5,-0.5) circle (3pt);
+\draw [fill=black,very thick] (0.5,-0.5) circle (3pt);
+\draw [fill=black,very thick] (1.5,-0.5) circle (3pt);
+\draw [fill=black,very thick] (2.5,-0.5) circle (3pt);
+
+\draw [fill=black,very thick] (-2.5,0.5) circle (3pt);
+\draw [fill=black,very thick] (-1.5,0.5) circle (3pt);
+\draw [fill=black,very thick] (-0.5,0.5) circle (3pt);
+\draw [fill=black,very thick] (0.5,0.5) circle (3pt);
+\draw [fill=black,very thick] (1.5,0.5) circle (3pt);
+\draw [fill=black,very thick] (2.5,0.5) circle (3pt);
+
+\draw [fill=black,very thick] (-2.5,1.5) circle (3pt);
+\draw [fill=black,very thick] (-1.5,1.5) circle (3pt);
+\draw [fill=black,very thick] (-0.5,1.5) circle (3pt);
+\draw [fill=black,very thick] (0.5,1.5) circle (3pt);
+\draw [fill=black,very thick] (1.5,1.5) circle (3pt);
+\draw [fill=black,very thick] (2.5,1.5) circle (3pt);
+
+\draw [fill=black,very thick] (-2.5,2.5) circle (3pt);
+\draw [fill=black,very thick] (-1.5,2.5) circle (3pt);
+\draw [fill=black,very thick] (-0.5,2.5) circle (3pt);
+\draw [fill=black,very thick] (0.5,2.5) circle (3pt);
+\draw [fill=black,very thick] (1.5,2.5) circle (3pt);
+\draw [fill=black,very thick] (2.5,2.5) circle (3pt);
+
+\end{tikzpicture}
+\caption{Regular square lattice Ising model.}
+\end{center}
+\end{figure}
 
 %%%%% GRAPH THEORY %%%%%
 
@@ -113,7 +202,6 @@ A random graph is a graph where the edges connect vertices at random; there is n
 \begin{center}
 \begin{tikzpicture}[scale=1.5]
 
-
 \node at (-1.5, 2) {Set $A$};
 \node at (1.5, 2) {Set $B$};
 
@@ -126,9 +214,6 @@ A random graph is a graph where the edges connect vertices at random; there is n
 \filldraw ([xshift=-4pt,yshift=-4pt]1.5,0.5) rectangle ++(8pt,8pt);
 \filldraw ([xshift=-4pt,yshift=-4pt]1.5,-0.5) rectangle ++(8pt,8pt);
 \filldraw ([xshift=-4pt,yshift=-4pt]1.5,-1.5) rectangle ++(8pt,8pt);
-
-
-
 
 \draw [very thick] (-1.5,1.5) -- (1.5,1.5);
 \draw [very thick] (-1.5,1.5) -- (1.5,0.5);
@@ -243,19 +328,85 @@ Before we can do this however we must preform some checks. We must ensure that $
 
 Implementing the algorithm in serial is a rather straightforward. Pseudocode of thel
 
+\begin{algorithm}
+\caption{Serial swap algorithm}
 \begin{algorithmic}
 
+\State Pick $a_0 =$ \verb|rand| $\in A$
 
-\State a_0 = rand  mod(num-nodes);
-\While{ b_1 \neq b_2} 
-b_1 = rand \in (neighbour(a_0));
-b_2 = rand \in (neighbour(a_0))
+\While {$b_1 \neq b_2$}
+\State $b_1 =$ \verb|rand| $\in N(a_0)$
+\State $b_2 =$ \verb|rand| $\in N(a_0)$
 \EndWhile
 
+\While {$flag = 1$}
+
+\While {$a_1 \neq a_2$, $a_1 \neq a_0$, $a_2 \neq a_0$}
+\State $a_1 =$ \verb|rand| $\in N(b_1)$
+\State $a_2 =$ \verb|rand| $\in N(b_2)$
+\EndWhile
+
+\If {$a_1 \in N(b_2)$}
+\State $flag =1$
+\EndIf
+
+\If {$a_2 \in N(b_1)$}
+\State $flag =1$
+\EndIf
+
+\EndWhile
 
 \end{algorithmic}
+\end{algorithm}
+
 
 \paragraph{Parallel Implementation} ~\\
+
+The parallel implementation of this algorithm is, naturally, a little more tricky. It is also a problem that does not parallise well at all. In fact, the serial algorithm is much faster and more efficient. 
+
+%%%%%% PARALLEL SWAP ALG %%%%%%%
+
+\begin{algorithm}
+\caption{Parallel swap algorithm}
+\begin{algorithmic}
+
+\If {$rank = 0$}
+\State Pick $a_0 =$ \verb|rand| $\in A$
+\State Determine rank of proc $a_0$ is hosted on, $rank(a_0)$
+\EndIf
+
+\State \verb|MPI_Bcast(a_0,...,0,...)|
+\State \verb|MPI_Bcast(rank(a_0),...,0,...)|
+
+\If {$rank = rank(a_0)$} 
+\While {$b_1 \neq b_2$}
+\State $b_1 =$ \verb|rand| $\in N(a_0)$
+\State $b_2 =$ \verb|rand| $\in N(a_0)$
+\EndWhile
+\EndIf
+
+\State \verb|MPI_Bcast(b_1,...,rank(a_0),...)|
+\State \verb|MPI_Bcast(b_2,...,rank(a_0),...)|
+
+\State Determine rank of proc $b_1$ is hosted on, $rank(b_1)$
+\State Determine rank of proc $b_2$ is hosted on, $rank(b_2)$
+
+\While {$a_1 \neq a_2$, $a_1 \neq a_0$, $a_2 \neq a_0$}
+\If { $rank = rank(b_1)$}
+\State $a_1 =$ \verb|rand| $\in N(b_1)$
+\EndIf
+\If{ $rank = rank(b_2)$}
+\State $a_2 =$ \verb|rand| $\in N(b_2)$
+\EndIf
+\EndWhile
+
+\State \verb|MPI_Bcast(a_1,...,rank(b_1),...)|
+\State \verb|MPI_Bcast(a_2,...,rank(b_2),...)|
+
+\end{algorithmic}
+\end{algorithm}
+
+%%%%%%%% END OF ALG %%%%%%%%
 
 %%%%% MPI %%%%%
 \subsection{MPI communications}
@@ -323,12 +474,16 @@ The problem of how to split the data most efficiently between computing cores wi
 \caption{Data division for a random trivalent, bipartite graph.}
 \end{center}
 \end{figure}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%% END OF PIC %%%%%%%%%%%%%%
+
+
+
 
 %%%%% PROBLEMS ENCOUNTERED IN IMPLEMENTATION %%%%%
 
 
-%%%%% DOUBLE RING PICTURE %%%%%
+%%%%%%%%%%% DOUBLE RING PICTURE %%%%%%%%%%
 
 \begin{figure}
 \begin{center}
@@ -376,7 +531,7 @@ The problem of how to split the data most efficiently between computing cores wi
 \end{center}
 \end{figure}
 
-%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%% END OF PIC %%%%%%%%%%%%%%
 
 
 
@@ -398,5 +553,10 @@ The problem of how to split the data most efficiently between computing cores wi
 
 hello
 
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% FUTURE WORK %%%%%
+%%%%%%%%%%%%%%%%%%%%%%%
 
+\section{Future Work}
 \end{document}

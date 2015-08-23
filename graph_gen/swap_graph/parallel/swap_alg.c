@@ -211,7 +211,7 @@ void parallel_swap_alg_once(int num_nodes, Array * a, Array * b){
 		MPI_Bcast(&rankb1, 1, MPI_INT, ranka_first, MPI_COMM_WORLD);
 		MPI_Bcast(&rankb2, 1, MPI_INT, ranka_first, MPI_COMM_WORLD);
 			
-		// find correct indices
+		// find correct indices that give a_first
 			
 		if(host.rank == rankb1){
 			index1=0;

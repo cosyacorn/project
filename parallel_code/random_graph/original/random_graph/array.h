@@ -11,5 +11,5 @@ Array;
 
 // -------------------------------------
 
-Array* init_array(int num_nodes, int ** graph);
+Array* init_array(int num_nodes);
 void free_array(Array *a);
