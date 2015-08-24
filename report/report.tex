@@ -11,6 +11,28 @@
 \usetikzlibrary{decorations.pathmorphing}
 \usetikzlibrary{shapes}
 \tikzset{snake it/.style={decorate, decoration=snake}}
+\usepackage{lipsum}
+
+\makeatletter
+\newenvironment{breakablealgorithm}
+  {% \begin{breakablealgorithm}
+   \begin{center}
+     \refstepcounter{algorithm}% New algorithm
+     \hrule height.8pt depth0pt \kern2pt% \@fs@pre for \@fs@ruled
+     \renewcommand{\caption}[2][\relax]{% Make a new \caption
+       {\raggedright\textbf{\ALG@name~\thealgorithm} ##2\par}%
+       \ifx\relax##1\relax % #1 is \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##2}%
+       \else % #1 is not \relax
+         \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##1}%
+       \fi
+       \kern2pt\hrule\kern2pt
+     }
+  }{% \end{breakablealgorithm}
+     \kern2pt\hrule\relax% \@fs@post for \@fs@ruled
+   \end{center}
+  }
+\makeatother
 
 
 \begin{document}
@@ -272,14 +294,6 @@ Over the course of this project numerous different methods were implemented and 
 %%%%% SWAP ALG %%%%%
 \subsubsection{Swap algorithms in serial and parallel}
 
-The swap aglorithm is used for two purposes in this project. The first in the generation of random graphs, and the second is as a proposal step during an update (instead of proposing a spin flip a swap is proposed instead. The reasoning and implementation of both of this will be addressed in a while but first we will look at how the swap alogrithm works.
-
-\paragraph{The algorithm} ~\\
-
-The algorithm works by first choosing a node in set $A$, at random, which we will call $a_0$ . From this node two of its neighbours in set $B$ are chosen (again, at random), we call these $b_1$ and $b_2$. The next step is to choose one neighbour each of $b_1$ and $b_2$, ensuring not to choose $a_0$ again. Label the neighbour of $b_1$ as $a_1$ and the neighbour of $b_2$ as $a_2$. At this point we have the nodes selected that we wish to swap. We want to have $b_1$ not connected to $a_1$ anymore, but instead have it connected to $a_2$, and similarly no longer have $b_2$ connected to $a_2$, but connected to $a_1$.
-
-Before we can do this however we must preform some checks. We must ensure that $a_1$ is not connected to $b_2$ by any other edge that we have not considered so far, and similarly we must must ensure that $a_2$ is in no way connected to $b_1$. The reason for this check is that we may already have the nodes we wish to swap connected to each other by another edge, so if the swap is performed then it would mean having two edges connecting the same two points to each other, which is not desirable.
-
 %%%%% SWAP ALG PIC %%%%%
 \begin{figure}
 \begin{center}
@@ -324,9 +338,19 @@ Before we can do this however we must preform some checks. We must ensure that $
 \end{center}
 \end{figure}
 
+The swap aglorithm is used for two purposes in this project. The first in the generation of random graphs, and the second is as a proposal step during an update (instead of proposing a spin flip a swap is proposed instead. The reasoning and implementation of both of this will be addressed in a while but first we will look at how the swap alogrithm works.
+
+\paragraph{The algorithm} ~\\
+
+The algorithm works by first choosing a node in set $A$, at random, which we will call $a_0$ . From this node two of its neighbours in set $B$ are chosen (again, at random), we call these $b_1$ and $b_2$. The next step is to choose one neighbour each of $b_1$ and $b_2$, ensuring not to choose $a_0$ again. Label the neighbour of $b_1$ as $a_1$ and the neighbour of $b_2$ as $a_2$. At this point we have the nodes selected that we wish to swap. We want to have $b_1$ not connected to $a_1$ anymore, but instead have it connected to $a_2$, and similarly no longer have $b_2$ connected to $a_2$, but connected to $a_1$.
+
+Before we can do this however we must preform some checks. We must ensure that $a_1$ is not connected to $b_2$ by any other edge that we have not considered so far, and similarly we must must ensure that $a_2$ is in no way connected to $b_1$. The reason for this check is that we may already have the nodes we wish to swap connected to each other by another edge, so if the swap is performed then it would mean having two edges connecting the same two points to each other, which is not desirable.
+
+
+
 \paragraph{Serial Implementation} ~\\
 
-Implementing the algorithm in serial is a rather straightforward. Pseudocode of thel
+Implementing the algorithm in serial is a rather straightforward. It follows the description given above and there is no complication involving which point is hosted on which process. The hardest part of writing the code for this algorithm was doing the checks at the end to ensure that the points you were swapping weern't already neighbours through another edge that hadn't yet been considered.
 
 \begin{algorithm}
 \caption{Serial swap algorithm}
@@ -354,19 +378,23 @@ Implementing the algorithm in serial is a rather straightforward. Pseudocode of 
 \State $flag =1$
 \EndIf
 
+\State Do swap:
+\State $a_2 \in N(b_1)$ and $a_1 \in N(b_2)$
+\State $b_2 \in N(a_1)$ and $b_1 \in N(a_2)$
+
 \EndWhile
 
 \end{algorithmic}
 \end{algorithm}
-
+%%%%%%%% END ALG %%%%%%%%
 
 \paragraph{Parallel Implementation} ~\\
 
-The parallel implementation of this algorithm is, naturally, a little more tricky. It is also a problem that does not parallise well at all. In fact, the serial algorithm is much faster and more efficient. 
+The parallel implementation of this algorithm is, naturally, a little more tricky. It is also a problem that does not parallise well at all. In fact, the serial algorithm is much faster and more efficient. The main reason for this is that in the parallel version nodes, and information about what connections they have, are stored on different processors. This means that every time it is needed to pick another node or check a node's neighbours every other processor must wait while one processor does the work. 
 
 %%%%%% PARALLEL SWAP ALG %%%%%%%
 
-\begin{algorithm}
+\begin{breakablealgorithm}
 \caption{Parallel swap algorithm}
 \begin{algorithmic}
 
@@ -391,6 +419,7 @@ The parallel implementation of this algorithm is, naturally, a little more trick
 \State Determine rank of proc $b_1$ is hosted on, $rank(b_1)$
 \State Determine rank of proc $b_2$ is hosted on, $rank(b_2)$
 
+\While {$flag=1$}
 \While {$a_1 \neq a_2$, $a_1 \neq a_0$, $a_2 \neq a_0$}
 \If { $rank = rank(b_1)$}
 \State $a_1 =$ \verb|rand| $\in N(b_1)$
@@ -400,11 +429,41 @@ The parallel implementation of this algorithm is, naturally, a little more trick
 \EndIf
 \EndWhile
 
+\If {$a_1 \in N(b_2)$}
+\State $flag =1$
+\EndIf
+
+\If {$a_2 \in N(b_1)$}
+\State $flag =1$
+\EndIf
+
+\EndWhile
 \State \verb|MPI_Bcast(a_1,...,rank(b_1),...)|
 \State \verb|MPI_Bcast(a_2,...,rank(b_2),...)|
 
+\State Determine rank of proc $a_1$ is hosted on, $rank(a_1)$
+\State Determine rank of proc $a_2$ is hosted on, $rank(a_2)$
+
+\State Do swap:
+\If {$rank = rank(a_1)$}
+\State $b_2 \in N(a_1)$
+\EndIf
+
+\If {$rank = rank(a_2)$}
+\State $b_1 \in N(a_2)$
+\EndIf
+
+\If {$rank = rank(b_1)$}
+\State $a_2 \in N(b_1)$
+\EndIf
+
+\If {$rank = rank(b_2)$}
+\State $a_1 \in N(b_2)$
+\EndIf
+
+
 \end{algorithmic}
-\end{algorithm}
+\end{breakablealgorithm}
 
 %%%%%%%% END OF ALG %%%%%%%%
 
