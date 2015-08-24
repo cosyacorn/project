@@ -7,7 +7,7 @@
 \usepackage{amsmath}
 \usepackage{hyperref}
 \usepackage{algorithm}
- \usepackage{algpseudocode}
+\usepackage{algpseudocode}
 \usetikzlibrary{decorations.pathmorphing}
 \usetikzlibrary{shapes}
 \tikzset{snake it/.style={decorate, decoration=snake}}
@@ -390,7 +390,7 @@ Implementing the algorithm in serial is a rather straightforward. It follows the
 
 \paragraph{Parallel Implementation} ~\\
 
-The parallel implementation of this algorithm is, naturally, a little more tricky. It is also a problem that does not parallise well at all. In fact, the serial algorithm is much faster and more efficient. The main reason for this is that in the parallel version nodes, and information about what connections they have, are stored on different processors. This means that every time it is needed to pick another node or check a node's neighbours every other processor must wait while one processor does the work. 
+The parallel implementation of this algorithm is, naturally, a little more tricky. It is also a problem that does not parallise well at all. In fact, the serial algorithm is much faster and more efficient. The main reason for this is that in the parallel version nodes, and information about what connections they have, are stored on different processors. This means that every time it is needed to pick another node or check a node's neighbours every other processor must wait while one processor does the work. These tasks can't be done simultaneously during the algorithm since each step is directly dependent on the previous step. The problem also can't be avoided by running the algorithm twice (or more) at the same time. This is because, again the whole geometry of the graph must be know in order for the swap to happen, and if one version changes the graph then the other versions don't know about this change yet and so could make a swap that no longer exists on the graph.
 
 %%%%%% PARALLEL SWAP ALG %%%%%%%
 

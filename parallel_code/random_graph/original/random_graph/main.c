@@ -32,44 +32,6 @@ int main(int argc, char * argv[]){
 	srand(12345+host.rank);
 	
 
-
-/*	a_graph[0][0] = 0;
-	a_graph[0][1] = 1;
-	a_graph[0][2] = 3;
-
-	a_graph[1][0] = 1;
-	a_graph[1][1] = 2;
-	a_graph[1][2] = 3;
-
-	a_graph[2][0] = 0;
-	a_graph[2][1] = 2;
-	a_graph[2][2] = 3;
-
-	a_graph[3][0] = 0;
-	a_graph[3][1] = 1;
-	a_graph[3][2] = 2;
-
-
-	b_graph[0][0] = 0;
-	b_graph[0][1] = 2;
-	b_graph[0][2] = 3;
-
-	b_graph[1][0] = 0;
-	b_graph[1][1] = 1;
-	b_graph[1][2] = 3;
-
-	b_graph[2][0] = 1;
-	b_graph[2][1] = 2;
-	b_graph[2][2] = 3;
-
-	b_graph[3][0] = 0;
-	b_graph[3][1] = 1;
-	b_graph[3][2] = 2;
-*/
-
-//	print_graph(a_graph, num_nodes);
-//	print_graph(b_graph, num_nodes);
-
 	size = num_nodes/host.np; // num nodes per proc
 
 	a = init_array(size); // set up array on each proc
@@ -82,27 +44,28 @@ int main(int argc, char * argv[]){
 	f_a = init_field(a); 
 	f_b = init_field(b);
 
+
+
+	
+	set_up_halo(f_a, a);
+	set_up_halo(f_b, b);
+	
+
 	MPI_Barrier(MPI_COMM_WORLD);
-
-	
-	set_up_halo(f_a, f_b, a);
-	set_up_halo(f_b, f_a, b);
-	
-
+	pprintf("hello\n");
 	MPI_Barrier(MPI_COMM_WORLD);
-
 	
-	send_boundary_data(f_b, a);
+	send_boundary_data(f_a, a);
 	//send_boundary_data(f_a, b);
-	pprintf("sent\n");
-	MPI_Barrier(MPI_COMM_WORLD);
+	//pprintf("sent\n");
+	//MPI_Barrier(MPI_COMM_WORLD);
 //	if(host.rank==1) printf("point 2 3 on b on proc 1 = %d %d\n", f_b->value[0], f_b->value[1]);
 
 //	if(host.rank==0) printf("fb 3 val on halo on proc 0 = %d %d \n", f_b->halo[1][0], f_b->halo[1][1]);
 
-	t1 = MPI_Wtime();
+//	t1 = MPI_Wtime();
 
-	for(beta=0.01;beta<1.00;beta+=0.01){
+/*	for(beta=0.01;beta<1.00;beta+=0.01){
 		avg=0.0;
 		for(i=0;i<num_updates;i++){
 			update(size, f_a, f_b, beta, a, b); 
@@ -111,11 +74,11 @@ int main(int argc, char * argv[]){
 
 		pprintf("%Zbeta: %lf; avg magnetisation: %lf\n",beta,avg/(double) num_updates);
 	}
+*/
 
+//	t2 = MPI_Wtime();
 
-	t2 = MPI_Wtime();
-
-	pprintf("%Ztotal time taken: %lf\n", t2-t1);
+//	pprintf("%Ztotal time taken: %lf\n", t2-t1);
 	
 	// write results to file
 /*	if(host.rank==0){
