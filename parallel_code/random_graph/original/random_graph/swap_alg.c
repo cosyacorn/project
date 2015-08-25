@@ -3,6 +3,7 @@
 #include "machine.h"
 #include "array.h"
 
+//===== PARALLEL SWAP ALG =====//
 void parallel_swap_alg(int num_nodes, int num_swaps, Array * a, Array * b){
 
 int flag, flag2, count;
@@ -154,31 +155,5 @@ int flag, flag2, count;
 			b->neighbour[b_point2%host.num_nodes_local][b_index2] = a_point1;
 		}
 	MPI_Barrier(MPI_COMM_WORLD);
-	}
-}
-
-
-
-
-
-void reverse_engineer(int ** in, int ** out, int num_nodes){
-
-	int i, j, index, k;
-
-	for(i=0;i<num_nodes;i++){
-		for(j=0;j<3;j++){
-			out[i][j]=-1;
-		}
-	}
-
-	for(i=0;i<num_nodes;i++){
-		for(j=0;j<3;j++){
-			index=in[i][j];
-			k=0;
-			while(out[index][k]!=-1){
-				k++;
-			}
-			out[index][k]=i;
-		}
 	}
 }

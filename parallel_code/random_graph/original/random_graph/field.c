@@ -6,7 +6,7 @@
 #include "array.h" 
 #include "field.h" 
 
-
+//===== INIT FIELD =====//
 Field * init_field(Array * a){
 
 	int i, size;
@@ -36,7 +36,7 @@ Field * init_field(Array * a){
 }
 
 
-
+//===== SET UP HALO =====//
 void set_up_halo(Field *f_a, Array *a){
 
 	int i, j;
@@ -90,6 +90,7 @@ void set_up_halo(Field *f_a, Array *a){
 
 }
 
+//===== FREE FIELD =====//
 void free_field(Field* f){
 
 	int i;
@@ -105,4 +106,3 @@ void free_field(Field* f){
 
 	free(f);
 }
-

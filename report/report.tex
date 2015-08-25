@@ -291,6 +291,19 @@ Over the course of this project numerous different methods were implemented and 
 %%%%% RANDOM GRAPHS %%%%%
 \subsubsection{Generating random graphs in serial}
 
+There were two methods employed to generate random graphs over the course of this project. The first method (which we will call \emph{simple generation}) was not used as often as it could not be generalised as easily to parallel code and is only applicable for generating bipartite, trivalent graphs. The second method is the swap algorithm which is discussed in detail in the following subsection.
+
+The simple generation method works by building the set of neighbours of one of the bipartite sets and then using that to reverse engineer the other. The first set, set $A$, is generated using the simple rules:
+
+\begin{enumerate}
+\item Each node in set $A$ must have exactly three unique neighbours.
+\item In the set of all neighbours of $A$ each node index of nodes in $B$ must appear exactly three time.
+\end{enumerate}
+
+The first rule ensure that the graph is trivalent, from $A$'s point of view, with three unique nodes in $B$ as neighbours. The second rule ensures that each point in $B$ has three neighbours, as it only allows three points in $A$ to connect to each point in $B$.
+
+This method is works quite well in serial, as it starts at node $0$ and fills in its neighbours and then continues all the way down to node $n-1$. The only complication is in filling in the final three nodes where some fairly simple checks must be preformed to ensure that the last three `slots' to fill in aren't `illegal' moves. By this, it is meant that filling the slots with the remaining available values would break one of the rules above.
+
 %%%%% SWAP ALG %%%%%
 \subsubsection{Swap algorithms in serial and parallel}
 
@@ -338,7 +351,11 @@ Over the course of this project numerous different methods were implemented and 
 \end{center}
 \end{figure}
 
-The swap aglorithm is used for two purposes in this project. The first in the generation of random graphs, and the second is as a proposal step during an update (instead of proposing a spin flip a swap is proposed instead. The reasoning and implementation of both of this will be addressed in a while but first we will look at how the swap alogrithm works.
+The swap aglorithm is used for two purposes in this project. The main use is in the generation of random graphs, and a secondary use is as a proposal step during an update (instead of proposing a spin flip a swap is proposed instead) MIGHT DO THIS COME BACK TO.
+
+In the simplest terms the swap algorithm takes two points in one bipartite set and chooses a neighbour of each of the chosed points and then swaps the connectivity, so that the first point is now a neighbour to the point who was neighbouring the second point, and vice versa. The main advantage of using this swap algorithm is that it preserves the properties of the graph. If we start with a bipartite, trivalent graph and do 1000 swaps, say, then the graph will still remain bipartite and trivalent.
+
+The algorithm preserves this because each swap ensures that points in set $A$ remain only connected to points in set $B$. It also does not change the number of edges coming out of any vertices, this is because it simply two edges are directly swapped with each other between pairs of points so all points involved retain the number of connections they have.
 
 \paragraph{The algorithm} ~\\
 
@@ -352,7 +369,7 @@ Before we can do this however we must preform some checks. We must ensure that $
 
 Implementing the algorithm in serial is a rather straightforward. It follows the description given above and there is no complication involving which point is hosted on which process. The hardest part of writing the code for this algorithm was doing the checks at the end to ensure that the points you were swapping weern't already neighbours through another edge that hadn't yet been considered.
 
-\begin{algorithm}
+\begin{breakablealgorithm}
 \caption{Serial swap algorithm}
 \begin{algorithmic}
 
@@ -385,7 +402,7 @@ Implementing the algorithm in serial is a rather straightforward. It follows the
 \EndWhile
 
 \end{algorithmic}
-\end{algorithm}
+\end{breakablealgorithm}
 %%%%%%%% END ALG %%%%%%%%
 
 \paragraph{Parallel Implementation} ~\\
@@ -601,7 +618,31 @@ The problem of how to split the data most efficiently between computing cores wi
 
 \section{Results}
 
+\subsection{Serial code}
 
+\subsubsection{Double Ring Graph}
+
+\subsubsection{Random Bipartite Trivalent graph}
+
+\subsection{Swap Algorithm}
+
+In this section the performance of the swap algorithm is analysed. The serial version of the algorithm will be compared to the parallel algorithm for a varying number of cores. The number of swaps required to make a graph random will also be studied.
+
+\subsubsection{How Many Swaps makes a Random Graph?}
+
+Before a graph is randomised for a simulation it is first initialised in an order that is fast and easy to compute. This is normally just the double ring cofiguration, where ever node has neighbours of the node with the same index, one ahead and one behind in the other bipartite set. From this initialisation we have to randomise the graph using the swap algorithm.
+
+The problem here is knowing how many swaps need to be made before all traces of this original configuration are lost and the graph can be considered random. We know that initially every points neighbours are the three closest to it in our indexing system. So, if we have point $n$ in $A$ we know that its neighbours are $n-1$, $n$ and $n+1$ in set $B$.
+
+If a graph is truly random then it is expected that given any node in set $A$, the probability of it being connected to any given node in $B$ is simply $\frac{1}{n}$, where $n$ is the number of nodes in $B$. So this means that if we divide the graph in half horizontally, as in the data division figure, we would expect, on average, half of our connections to cross this horizontal line.
+
+In other words, if we think of how
+
+\subsubsection{Serial Vs. Parallel}
+
+\subsection{Speedup}
+
+\subsection{How}
 
 \newpage
 %%%%%%%%%%%%%%%%%%%%%%

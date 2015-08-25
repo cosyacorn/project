@@ -5,6 +5,7 @@
 
 // -------------------------------------
 
+//===== CHECK ARRAY =====//
 void check_array(Array* a){
 
 	// Check machine size compatible...
@@ -15,7 +16,7 @@ void check_array(Array* a){
 	MPI_Barrier(MPI_COMM_WORLD);
 }
 
-
+//===== INIT ARRAY =====//
 Array * init_array(int num_local_nodes){
 
 	int i, j;
@@ -43,6 +44,7 @@ Array * init_array(int num_local_nodes){
 	return a;
 }
 
+//===== PRINT ARRAY =====//
 void print_array(Array *a){
 
 	int i, j;
@@ -53,12 +55,14 @@ void print_array(Array *a){
 
 }
 
+//===== FREE ARRAY =====//
 void free_array(Array *a){
 
 	int i;
 
 	for(i=0;i<a->x_local;i++)
 		free(a->neighbour[i]);
+
 	free(a->neighbour);
 	free(a);
 }

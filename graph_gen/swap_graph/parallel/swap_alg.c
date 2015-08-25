@@ -22,7 +22,7 @@ int main(int argc, char *argv[]){
 	int i, j, num_nodes, num_swaps, size_local, sum, tot;
 	double time_taken, avg;
 	Array *a_loc, *b_loc;
-	clock_t begin, end;
+	double begin, end;
 
 	MPI_Init(&argc,&argv);
 
@@ -114,12 +114,9 @@ int main(int argc, char *argv[]){
 	
 	}*/
 
-	
-	MPI_Barrier(MPI_COMM_WORLD);
-	pprintf("%ZTime to execute: %f\n", time_taken);
 
-	for(i=0;i<host.np;i++)
-		pprintf("send[%d] = %d\n", i, send_count[i]);
+	//for(i=0;i<host.np;i++)
+	//	pprintf("send[%d] = %d\n", i, send_count[i]);
 
 	for(i=0;i<host.np;i++)
 		sum += send_count[i];
@@ -135,7 +132,7 @@ int main(int argc, char *argv[]){
 
 	//avg = avg/2; // double counting
 
-	pprintf("%Zavg %f\n", avg);
+	pprintf("%ZNum nodes: %d (tot: %d)\navg send count: %f\nExpected send count: %f\nNum swaps: %d\nTime to execute: %f\n",num_nodes, num_nodes*2, avg, 3*(double)num_nodes/(double)host.np, num_swaps, time_taken);
 
 	// clean up time
 	for(i=0;i<num_nodes;i++){

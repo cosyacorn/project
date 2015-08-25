@@ -17,7 +17,7 @@ typedef struct {
 	int *send_count;
 	int *recv_count;
 
-	int *double_count;
+	int **double_count;
 
 } BoundaryComm; 
 
@@ -26,22 +26,18 @@ typedef struct {
 static BoundaryComm* init_comm(Array* a){
 
 	int i, j;
-
-	MPI_Request * send = (MPI_Request *) malloc(sizeof(MPI_Request) * (host.np-1));
-	MPI_Request * recv = (MPI_Request *) malloc(sizeof(MPI_Request) * (host.np-1));
-
-	MPI_Status * send_status = (MPI_Status *) malloc(sizeof(MPI_Status) * (host.np-1));
-	MPI_Status * recv_status = (MPI_Status *) malloc(sizeof(MPI_Status) * (host.np-1));
-
-	MPI_Request * send_ptr = send;
-	MPI_Request * recv_ptr = recv; 
+	int proc;
 
 	BoundaryComm *c = malloc(sizeof(BoundaryComm));
 
-	c->double_count = (int*)malloc(sizeof(int)*host.np);
+	c->double_count = (int**)malloc(sizeof(int*)*a->x_local);
 
-	for(i=0;i<a->x_local;i++)
-		c->double_count[i]=0;
+	for(i=0;i<a->x_local;i++){
+		c->double_count[i] = (int *)malloc(sizeof(int)*host.np);
+		for(j=0;j<host.np;j++){
+			c->double_count[i][j] = 0;
+		}
+	}
 
 	//determine how many to be sent/recv to each process
 
@@ -56,11 +52,12 @@ static BoundaryComm* init_comm(Array* a){
 	for(i=0;i<a->x_local;i++){
 		// j=3 for trivalent - need to generalise
 		for(j=0;j<3;j++){
-			if(c->double_count[i] == 0){
+			proc = a->neighbour[i][j]/a->x_local;
+			if(c->double_count[i][proc] == 0){
 				// determine if neighbour is on a different proc
 				if(a->neighbour[i][j] < host.rank*a->x_local || a->neighbour[i][j] >= (host.rank+1)*a->x_local){
-					c->send_count[a->neighbour[i][j]/a->x_local]++; // increase count if it is on diff proc
-					c->double_count[i] = 1;
+					c->send_count[proc]++; // increase count if it is on diff proc
+					c->double_count[i][proc] = 1;
 				}
 			}
 		}
@@ -72,26 +69,31 @@ static BoundaryComm* init_comm(Array* a){
 	// malloc space for send buffer
 	c->buffer_send = (int **) malloc(sizeof(int *) * host.np);
 	c->buffer_recv = (int **) malloc(sizeof(int *) * host.np);
-
+	MPI_Barrier(MPI_COMM_WORLD);
 
 	for(i=0;i<host.np;i++){
-		if(c->send_count[i] != 0){
+		if(c->send_count[i] > 0){
 			c->buffer_send[i] = (int *) malloc(sizeof(int) * c->send_count[i]);
 		} else { 
 			c->buffer_send[i] = NULL;
 		}
+	}
 
-		if(c->recv_count[i] != 0){
+	for(i=0;i<host.np;i++){
+		if(c->recv_count[i] > 0){
 			c->buffer_recv[i] = (int *) malloc(sizeof(int) * c->recv_count[i]);
 		} else {
 			c->buffer_recv[i] = NULL;
 		}
 	}
+	
 
 	for(i=0;i<host.np;i++){
 		for(j=0;j<c->send_count[i];j++){
 			c->buffer_send[i][j]=0;
 		}
+	}
+	for(i=0;i<host.np;i++){
 		for(j=0;j<c->recv_count[i];j++){
 			c->buffer_recv[i][j]=0;
 		}
@@ -103,10 +105,10 @@ static BoundaryComm* init_comm(Array* a){
 
 
 //===== SEND =====//
-static void send(Field* f_b, Array* a, BoundaryComm* c){
+static void send(Field* f_a, Array* a, BoundaryComm* c){
 
 	int i, j, proc, *k;
-	int upper_lim, lower_lim, val;
+	int val;
 
 	MPI_Request *send = (MPI_Request *) malloc(sizeof(MPI_Request) * (host.np-1));	
 	MPI_Request *recv = (MPI_Request *) malloc(sizeof(MPI_Request) * (host.np-1));
@@ -117,51 +119,32 @@ static void send(Field* f_b, Array* a, BoundaryComm* c){
 	MPI_Request * send_ptr = send;
 	MPI_Request * recv_ptr = recv;
 
-	upper_lim = (a->x_offset+1)*a->x_local;
-	lower_lim = (a->x_offset)*a->x_local;
-
-	// initiate counter
-	k = (int *) malloc(sizeof(int) * host.np);
+	k = (int *) malloc(sizeof(int) * host.np); //index for each send buffer
 
 	for(i=0;i<host.np;i++)
 		k[i]=0;
 
 	// loop through array points
 	for(i=0;i<a->x_local;i++){
-
-		// loop over each points three neighbours
 		for(j=0;j<3;j++){
-
-			// determine if neighbour is on a diff proc
-			// (using same condition as when determining how much space to malloc
-
-			if(c->double_count[i] == 1 ){
-//				printf("yes\n");
-				if(a->neighbour[i][j] < lower_lim || a->neighbour[i][j] >= upper_lim){
-
+			proc = a->neighbour[i][j]/a->x_local;
+			if(c->double_count[i][proc] == 1 ){
+				
 					// copy value into buffer
-					proc = a->neighbour[i][j]/a->x_local;
 
-					if(f_b->value[i] == -1){
+					if(f_a->value[i] == -1){
 						val = 0;
 					} else {
 						val = 1;
 					}
 
-					c->buffer_send[proc][k[proc]] = 2*a->neighbour[i][j] + val;
+					c->buffer_send[proc][k[proc]] = 2*i + val;
 
-					// increase relavant counter
-					k[proc]++;
+					k[proc]++; // increase relavant counter
+					c->double_count[i][proc] = 0; // mark as loaded to buffer
 				}
 			}
 		}
-	}
-
-	//pprintf("k0 = %d\n", k[0]);
-
-	// malloc space for recv buffer
-
-
 	
 	// send send buffer and recv it in the recv buffer
 	for(i=0;i<host.np;i++){
@@ -172,12 +155,9 @@ static void send(Field* f_b, Array* a, BoundaryComm* c){
 			recv_ptr++;
 		}
 	}
-
 	
 	MPI_Waitall(host.np-1, send, send_status);
 	MPI_Waitall(host.np-1, recv, recv_status);
-
-
 
 	free(k);
 
@@ -185,22 +165,18 @@ static void send(Field* f_b, Array* a, BoundaryComm* c){
 	free(recv);
 
 	free(send_status);
-	free(recv_status);
-
-	
+	free(recv_status);	
 }
 
-// func to load recv buff into halo
-static void unpack(Field* f_b, Array* a, BoundaryComm* c){
+//===== UNPACK =====//
+static void unpack(Field* f_a, Array* a, BoundaryComm* c){
 
 	int i, j;	
-
-	
 
 	for(i=0;i<host.np;i++){
 		for(j=0;j<c->recv_count[i];j++){
 			if(c->recv_count[i] != 0){
-				f_b->halo[i][j] = c->buffer_recv[i][j];
+				f_a->halo[i][j] = c->buffer_recv[i][j];
 			}
 		}
 	}
@@ -208,31 +184,24 @@ static void unpack(Field* f_b, Array* a, BoundaryComm* c){
 
 
 //===== FREE =====//
-static void free_comm(BoundaryComm* c){
+static void free_comm(BoundaryComm* c, Array *a){
 
 	int i;
 
-	for(i=0;i<host.np;i++){
-		pprintf("%d\n", i);
-		MPI_Barrier(MPI_COMM_WORLD);
+	free(c->send_count);
+	free(c->recv_count);
 
+	for(i=0;i<host.np;i++)
 		free(c->buffer_send[i]);
+
+	for(i=0;i<host.np;i++)
 		free(c->buffer_recv[i]);
-	}
-
-	MPI_Barrier(MPI_COMM_WORLD);
-	pprintf("  here\n");
-	MPI_Barrier(MPI_COMM_WORLD);
-
+	
 	free(c->buffer_send);
 	free(c->buffer_recv);
 
-	MPI_Barrier(MPI_COMM_WORLD);
-	pprintf("here\n");
-	MPI_Barrier(MPI_COMM_WORLD);
-
-	free(c->send_count);
-	free(c->recv_count);
+	for(i=0;i<a->x_local;i++)
+		free(c->double_count[i]);
 
 	free(c->double_count);
 
@@ -242,19 +211,14 @@ static void free_comm(BoundaryComm* c){
 // Can be called from outside file
 
 //===== COMPLETE FUNC =====//
-void send_boundary_data(Field* f_b, Array* a){
+void send_boundary_data(Field* f_a, Array* a){
 
 	BoundaryComm * comm = init_comm(a);
 
-	pprintf("init\n");
+	send(f_a, a, comm);
 
-	//send(f_b, a, comm);
-	pprintf("%Zsent\n");
-	MPI_Barrier(MPI_COMM_WORLD);
-	//unpack(f_b, a, comm);
-	//pprintf("%Zreceived\n");
-	MPI_Barrier(MPI_COMM_WORLD);
-	//free_comm(comm);
-	pprintf("%Zfreed\n");
-	MPI_Barrier(MPI_COMM_WORLD);
+	unpack(f_a, a, comm);
+
+	free_comm(comm, a);
+
 }

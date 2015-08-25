@@ -5,10 +5,7 @@
 
 #include "machine.h" 
 
-// ====================================================================
-// ==================== A parallel printf function ====================
-// ====================================================================
-
+//===== PARALLEL PRINTF FUNCTION =====//
 void pprintf(char *format, ...){
 	va_list l;
 	char* new_format; 
@@ -35,6 +32,7 @@ void pprintf(char *format, ...){
 	va_end(l);
 }
 
+//===== INITY MACHINE =====//
 void init_machine(int argc, char *argv[], int tot_nodes){
 
 	if (argc != 1) MPI_Abort(MPI_COMM_WORLD,1);

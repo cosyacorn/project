@@ -171,7 +171,7 @@ int main(int argc, char * argv[]){
 	// calculate time
 	time_taken = (double)(end - begin)/CLOCKS_PER_SEC;	
 
-	printf("beta: %lf; avg magnetisation %lf; time taken: %lf\n",beta,mag/(double) num_iters, time_taken);
+	printf("beta: %lf; avg magnetisation %lf\ntime taken: %lf\n",beta,mag/(double) num_iters, time_taken);
 
 	for(i=0;i<num_points;i++){
 		free(a[i]);

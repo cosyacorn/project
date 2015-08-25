@@ -9,45 +9,7 @@
 #include <stdio.h>
 
 
-// double ring graph with n nodes
-int ** make_graph(int num_nodes){
-
-	int **graph, i, j;
-
-	graph = (int **) malloc(sizeof(int *)*num_nodes);
-	
-	for(i=0;i<num_nodes;i++){
-		graph[i] = (int *) malloc(sizeof(int)*3);
-		
-		for(j=0;j<3;j++){
-			graph[i][j] = (i-1+j+num_nodes)%num_nodes;
-		}
-	}
-
-	return graph;
-}
-
-void print_graph(int ** a, int num_nodes){
-
-	int i;
-
-	for(i=0;i<num_nodes;i++)
-		pprintf("%Z%d: %d, %d, %d\n", i, a[i][0], a[i][1], a[i][2]);
-}
-
-
-// free graph
-void free_graph(int ** graph, int size){
-
-	int i;
-
-	for(i=0;i<size;i++)
-		free(graph[i]);
-	free(graph);
-
-}
-
-// calculate hamiltonian
+//===== HAMILTONIAN =====//
 int hamiltonian_local(int spin, int spin1, int spin2, int spin3){
 	int H, a, b, c;
   
@@ -70,33 +32,31 @@ int hamiltonian_local(int spin, int spin1, int spin2, int spin3){
 
 
 
-// update func (only updates one bipartite set)
+//===== UPDATE ONE FIELD =====//
 // only visible in this file
 void update_one_field(int size, Field *f_a, Field *f_b, double beta, Array *a){
 
 	int i, j, k, prop, ham, new_ham;
-	int index[3];
+	int proc;
 	int spin[3];
 	double r, n;
 	int val;
-
-	// PROBLEM AREA BELOW //
 
 	// loop over points in local array
 	for(i=0;i<size;i++){
 		// loop over neighbours
 		for(j=0;j<3;j++){
 			// determine if neighbour is local or on another proc
-			// if on other proc then copy to halo
 			if(a->neighbour[i][j] < host.rank*size || a->neighbour[i][j] >= (host.rank+1)*size){
 				// set spin1 to halo
 				k=0; // set index to zero		
-				index[j] = a->neighbour[i][j]/size; // first index determines the rank of proc
-				
-				while(f_b->halo[index[j]][k]/2 != a->neighbour[i][j]){
-					val = f_b->halo[index[j]][k]/2;
+				proc = a->neighbour[i][j]/size; // first index determines the rank of proc
+
+				while(f_b->halo[proc][k]/2 != a->neighbour[i][j]%a->x_local){
 					k++;
 				}
+
+				val = f_b->halo[proc][k]%2;
 
 				if( val == 0){
 					spin[j] = -1;
@@ -104,10 +64,11 @@ void update_one_field(int size, Field *f_a, Field *f_b, double beta, Array *a){
 					spin[j] = 1;
 				}
 
-			} else { // if local ...
+			} else { 
 				spin[j] = f_b->value[a->neighbour[i][j]%size];
 			}
 		}
+	
 
 		// determine hamiltonian and do proposal etc..
 		ham = hamiltonian_local(f_a->value[i], spin[0], spin[1], spin[2]);
@@ -119,34 +80,35 @@ void update_one_field(int size, Field *f_a, Field *f_b, double beta, Array *a){
 		}
 		else{
 			n=drand48();
-			r=exp((-2)*(beta)*(new_ham - ham));
-
-			if(r>=n) f_a->value[i] = prop;
+			r=exp((-2)*(beta)*((double)new_ham - (double)ham));
+			if(r>=n)
+				f_a->value[i] = prop;
 		}
-	}
+	}	
 }
 
-// update the whole graph
+//===== UPDATE =====//
 void update(int size, Field *f_a, Field *f_b, double beta, Array *a, Array *b){
 
 	update_one_field(size, f_a, f_b, beta, a);
 
 	send_boundary_data(f_a, a);
 	
-
 	update_one_field(size, f_b, f_a, beta, b);
 
 	send_boundary_data(f_b, b);
 
 }
 
+//===== MAGNETISATION =====//
 double magnetisation(Field* phi, Array* a){
 
-	int x; 
-	int sum_local=0,sum_global;
+	int i; 
+	int sum_local=0;
+	int sum_global;
 
-	for (x=0;x<a->x_local;x++)
-		sum_local += phi->value[x];
+	for (i=0;i<a->x_local;i++)
+		sum_local += phi->value[i];
 
 	MPI_Allreduce(&sum_local, &sum_global, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
