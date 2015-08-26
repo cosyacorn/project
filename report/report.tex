@@ -491,7 +491,7 @@ The parallel implementation of this algorithm is, naturally, a little more trick
 
 \subsubsection{Data division and load balancing}
 
-The problem of how to split the data most efficiently between computing cores will be handled in this section. When we want to solve the system in parallel we have to give each processor a certain number of points on the graph. The method used to divide the data was to simply divide the nodes equally among the processors. 
+The problem of how to split the data most efficiently between computing cores will be handled in this section. When we want to solve the system in parallel we have to give each processor a certain number of points on the graph. The method used to divide the data was to simply divide the nodes equally among the processors. This may seem, at first glance, as though it isn't the most efficient way to distribute the data in order to minimise the MPI communication overhead of the calculation. However, it is actually the fairest and easiest way to balance each processor's load and have a, relatively, uniform spread of MPI communications between processors.
 
 
 %%% DATA DIVISION PIC %%%%%
