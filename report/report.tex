@@ -634,9 +634,23 @@ Before a graph is randomised for a simulation it is first initialised in an orde
 
 The problem here is knowing how many swaps need to be made before all traces of this original configuration are lost and the graph can be considered random. We know that initially every points neighbours are the three closest to it in our indexing system. So, if we have point $n$ in $A$ we know that its neighbours are $n-1$, $n$ and $n+1$ in set $B$.
 
-If a graph is truly random then it is expected that given any node in set $A$, the probability of it being connected to any given node in $B$ is simply $\frac{1}{n}$, where $n$ is the number of nodes in $B$. So this means that if we divide the graph in half horizontally, as in the data division figure, we would expect, on average, half of our connections to cross this horizontal line.
+If a graph is truly random then it is expected that given any node in set $A$, the probability of it being connected to any given node in $B$ is simply $\frac{1}{n_B}$, where $n_B$ is the number of nodes in $B$. So this means that if we divide the graph in half horizontally, as in the data division figure, we would expect, on average, half of our connections to cross this horizontal line.
 
-In other words, if we think of how
+In other words, if we think of how we divide a graph amongst processors by giving each processor an equar fraction of the nodes, we would then expect each processor to have the same, on average, connections to each other processor. This is easiest to think of with an example. Say we have a bipartite, trivalent graph where $n_A = n_B = 1024$, so there are $2048$ nodes in total. As each node in $A$ has three edges connecting it to nodes in $B$, the total number of edges in the graph is $3 \times 1024 = 3072$. If the graph is then divided by $4$ processors, then there are $\frac{3072}{4} = 768$ edges on each process.
+
+Now, it is expected at this stage that the graph is random, therefore each of these $768$ edges on a process is equally likley to be on any of the $4$ processors. So we expect $\frac{768}{4} = 192$ connections on each process.
+
+Code was written to simulate the exact situation described above and to determine how many swaps it takes to reach a random graph with no trace of its initial configuration.
+
+\begin{figure}
+
+\centering
+\includegraphics[scale=0.8]{swap_random_1024_by_2_nodegraph.jpg}
+\caption{This plot shows how the number of connections to different processors changes with the number of swaps performed. The graph used was a bipartite, trivalent graph with 1024 nodes in each set (2048 nodes in total). It was run on both 2 (green line) and 4 (red line) processors.}
+\end{figure}
+
+
+While the last simulation is useful for generating random graphs, it is also interesting, and possibly more useful, to examine how many swaps per node it takes for a graph to be considered random. This is interesting as this may be different for different sized graphs.
 
 \subsubsection{Serial Vs. Parallel}
 
