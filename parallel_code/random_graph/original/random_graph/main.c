@@ -21,8 +21,8 @@ int main(int argc, char * argv[]){
 
 	num_nodes=320;
 	beta=0.001;
-	num_updates=10000;
-	num_swaps=0;
+	num_updates=10;
+	num_swaps=10000;
 
 	MPI_Init(&argc,&argv);
 
@@ -44,6 +44,8 @@ int main(int argc, char * argv[]){
 	
 	set_up_halo(f_a, a);
 	set_up_halo(f_b, b);
+
+	//for(i=0;i
 
 	// initialise the halo data	
 	send_boundary_data(f_a, a);
@@ -68,7 +70,7 @@ int main(int argc, char * argv[]){
 	//pprintf("%Ztotal time taken: %lf\n", t2-t1);
 	
 	// write results to file
-	if(host.rank==0){
+/*	if(host.rank==0){
 
 		FILE* o;
 		char *filename = malloc(sizeof(char) * 15);
@@ -87,7 +89,7 @@ int main(int argc, char * argv[]){
 
 		fclose(o);
 		free(filename);
-	}
+	}*/
 
 	// clean up
 

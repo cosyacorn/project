@@ -26,8 +26,8 @@ int main(int argc, char *argv[]){
 
 	MPI_Init(&argc,&argv);
 
-	num_nodes = 1024;
-	num_swaps = 50000;
+	num_nodes = 2048;
+	num_swaps = 20000;
 	sum=0;
 
 	init_machine(argc, argv, num_nodes);
@@ -132,7 +132,7 @@ int main(int argc, char *argv[]){
 
 	//avg = avg/2; // double counting
 
-	pprintf("%ZNum nodes: %d (tot: %d)\navg send count: %f\nExpected send count: %f\nNum swaps: %d\nNum swaps per node: %f\nTime to execute: %f\n",num_nodes, num_nodes*2, avg, 3*(double)num_nodes/(double)(host.np*host.np), num_swaps, (double)num_swaps/(double)num_nodes, time_taken);
+	pprintf("%ZNum nodes: %d (tot: %d)\navg send count: %f\nExpected send count: %f\nNum swaps: %d\nNum swaps per node: %f\nTime to execute: %f\n",num_nodes, num_nodes*2, avg, 3*(double)num_nodes/(double)(host.np*host.np), num_swaps, (double)num_swaps/((double)num_nodes*2.0), time_taken);
 
 	// clean up time
 	for(i=0;i<num_nodes;i++){

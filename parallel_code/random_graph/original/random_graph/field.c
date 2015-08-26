@@ -40,13 +40,18 @@ Field * init_field(Array * a){
 void set_up_halo(Field *f_a, Array *a){
 
 	int i, j;
-	int *double_count, *send_count, *recv_count;
+	int proc;
+	int **double_count, *send_count, *recv_count;
 
+	double_count = (int**)malloc(sizeof(int*)*a->x_local);
 
-	double_count = (int*)malloc(sizeof(int)*a->x_local);
+	for(i=0;i<a->x_local;i++){
+		double_count[i] = (int *)malloc(sizeof(int)*host.np);
+		for(j=0;j<host.np;j++){
+			double_count[i][j] = 0;
+		}
+	}
 
-	for(i=0;i<a->x_local;i++)
-		double_count[i]=0;
 
 	//determine how many to be sent/recv to each process
 
@@ -62,11 +67,12 @@ void set_up_halo(Field *f_a, Array *a){
 	for(i=0;i<a->x_local;i++){
 		// j=3 for trivalent - need to generalise
 		for(j=0;j<3;j++){
-			if(double_count[i] == 0){
+		proc = a->neighbour[i][j]/a->x_local;
+			if(double_count[i][proc] == 0){
 				// determine if neighbour is on a different proc
 				if(a->neighbour[i][j] < host.rank*a->x_local || a->neighbour[i][j] >= (host.rank+1)*a->x_local){
 					send_count[a->neighbour[i][j]/a->x_local]++; // increase count if it is on diff proc
-					double_count[i] = 1;
+					double_count[i][proc] = 1;
 				}
 			}
 		}
@@ -87,6 +93,14 @@ void set_up_halo(Field *f_a, Array *a){
 			f_a->halo[i] = NULL;
 		}
 	}
+
+	for(i=0;i<a->x_local;i++)
+		free(double_count[i]);
+
+	free(double_count);
+
+	free(send_count);
+	free(recv_count);
 
 }
 
