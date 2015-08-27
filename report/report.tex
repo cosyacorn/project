@@ -1,17 +1,22 @@
 \documentclass[pdftex,12pt,a4paper]{article}
 \newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
-\linespread{1.3}
+
+
 \usepackage{graphicx}
 \usepackage[margin=2.75cm]{geometry}
 \usepackage{tikz}
 \usepackage{amsmath}
+\usepackage{listings}
+\usepackage{color}
 \usepackage{hyperref}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
+\usepackage{lipsum}
+
 \usetikzlibrary{decorations.pathmorphing}
 \usetikzlibrary{shapes}
 \tikzset{snake it/.style={decorate, decoration=snake}}
-\usepackage{lipsum}
+\linespread{1.3}
 
 \makeatletter
 \newenvironment{breakablealgorithm}
@@ -33,6 +38,32 @@
    \end{center}
   }
 \makeatother
+
+
+\lstdefinestyle{customc}{
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  frame=L,
+  xleftmargin=\parindent,
+  language=C,
+  showstringspaces=false,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\bfseries\color{green!40!black},
+  commentstyle=\itshape\color{purple!40!black},
+  identifierstyle=\color{blue},
+  stringstyle=\color{orange},
+}
+
+\lstdefinestyle{customasm}{
+  belowcaptionskip=1\baselineskip,
+  frame=L,
+  xleftmargin=\parindent,
+  language=[x86masm]Assembler,
+  basicstyle=\footnotesize\ttfamily,
+  commentstyle=\itshape\color{purple!40!black},
+}
+
+\lstset{escapechar=@,style=customc}
 
 
 \begin{document}
@@ -484,6 +515,100 @@ The parallel implementation of this algorithm is, naturally, a little more trick
 
 %%%%%%%% END OF ALG %%%%%%%%
 
+\subsection{General Overview of Parallel Simulation}
+
+In this section a general overview of how the code written for this project works. In the following sections some of the more complicated steps will be explained in greater detail.
+
+The program is first initialised with MPI on the required number of processors, \verb|num_proc|. The number of nodes, \verb|num_nodes| in the graph to be solved is determined. Each bipartite set gets half of these points.
+
+Two typedef'd struct called \verb|Array| is initialised on each CPU, one is for the nodes in set $A$, the other for the nodes in set $B$. This structure contains the total number of nodes in the set, the local number of nodes, the offset of the array and a list of all the neighbours of the nodes held localy.
+
+\begin{lstlisting}
+typedef struct {
+	int x; // global number of nodes in set
+
+	int x_local; // local number of nodes in set
+
+	int x_offset; // Array offsets
+
+	int **neighbour; // array of neighbouring points
+}
+Array;
+\end{lstlisting}
+
+The element \verb|**neighbour| is a two dimensional array. Its size is determined at run-time by the size of the graph, number of processors and the number of neighbours each point has. The first index, $i$, is the local index of a node in the array, the second index, $j$, is the index of $i$'s $j$^{th} neighbour. So if we have an array for set $A$ denoted simply by \verb|a| then \verb|a->neighbour[i][j]| gives the global index of the $j^{th}$ neighbour of $i$. $i$'s global index is given by: \verb|i_global = a->x_local*a->x_offset + i|.
+
+The array is initialised into a double ring configuration by default. The reason for this is that it is very simple to set up. Each node's neighbours are simply the points with global indices $n-1$, $n$ and $n+1$ all in set $B$, if we are considering the node with global index $n$ in set $A$.
+
+
+The next step is to run the swap algorithm, as described in the previous section, a sufficient number of times in order to randomise the graph.
+
+A similar struct to \verb|Array|, called \verb|Field| is then initialised. Like the array struct it is initialised on ever processor twice, once for nodes in $A$ and once for $B$. This struct has three elements. The first is the value array. This is an array of length \verb|a->x_local|. It holds the value of the spin each node has. Spin is denoted as $\uparrow = +1$ and $\downarrow = -1$.
+
+\begin{lstlisting}
+typedef struct
+{
+	int *value;	// vals for points on local process
+	int *halo_count; // number of data points to be recived from each proc
+	int **halo;	// vals of data recieved from each proc	
+}
+Field;
+\end{lstlisting}
+
+The \verb|*halo_count| array is the same size of the number of processors that the code is running on. It is a counter that measures how many data points will be sent from each other process to the host process. For example \verb|if(host.rank == 0) f_a->halo_count[2] = 7| means that if the host process is rank 0, then it expects to be sent 7 data points from process 2.
+
+Finally, the two dimensional array \verb|**halo| is the array that actually holds the values that are sent to the host process from the other processors. The first index of this array denotes the process from which the data is to be received from. The second index is the counter for the recieved data. Continuing with the example from the last paragraph, if we have \verb|if(host.rank == 0) f_a->halo_count[2] = 7| then \verb|if(host.rank == 0) f_a->halo[2][j]| has 7 elements, where $j$ determines which value is which, when the data is received.
+
+The next step is to malloc space for the points needed from other procs to be stored locally on the host proc.
+
+
+\begin{figure}
+\begin{center}
+\begin{tikzpicture}[scale=1.5]
+
+\node at (-1.5, 3) {Set $A$};
+\node at (1.5, 3) {Set $B$};
+
+\node at (-3, 3) {Proc $0$};
+\node at (-3, 1) {Proc $1$};
+\node at (-3, -1) {Proc $2$};
+
+\node at (-2.5, 2.5) {$0 (0)$};
+\node at (-2.5, 1.5) {$1 (1)$};
+\node at (-2.5, 0.5) {$0 (2)$};
+\node at (-2.5, -0.5) {$1 (3)$};
+\node at (-2.5, -1.5) {$0 (4)$};
+\node at (-2.5, -2.5) {$1 (5)$};
+
+\draw [fill=black,very thick] (-1.5,2.5) circle (0.15cm);
+\draw [fill=black,very thick] (-1.5,1.5) circle (0.15cm);
+\draw [fill=black,very thick] (-1.5,0.5) circle (0.15cm);
+\draw [fill=black,very thick] (-1.5,-0.5) circle (0.15cm);
+\draw [fill=black,very thick] (-1.5,-1.5) circle (0.15cm);
+\draw [fill=black,very thick] (-1.5,-2.5) circle (0.15cm);
+
+\draw [dashed] (-2.5,1) -- (2.5,1);
+\draw [dashed] (-2.5,-1) -- (2.5,-1);
+
+\filldraw ([xshift=-4pt,yshift=-4pt]1.5,2.5) rectangle ++(8pt,8pt);
+\filldraw ([xshift=-4pt,yshift=-4pt]1.5,1.5) rectangle ++(8pt,8pt);
+\filldraw ([xshift=-4pt,yshift=-4pt]1.5,0.5) rectangle ++(8pt,8pt);
+\filldraw ([xshift=-4pt,yshift=-4pt]1.5,-0.5) rectangle ++(8pt,8pt);
+\filldraw ([xshift=-4pt,yshift=-4pt]1.5,-1.5) rectangle ++(8pt,8pt);
+\filldraw ([xshift=-4pt,yshift=-4pt]1.5,-2.5) rectangle ++(8pt,8pt);
+
+
+\draw [very thick] (-1.5,0.5) -- (1.5,2.5);
+\draw [very thick] (-1.5,-0.5) -- (1.5,1.5);
+
+\draw [very thick] (-1.5,0.5) -- (1.5,-1.5);
+\draw [very thick] (-1.5,0.5) -- (1.5,-2.5);
+
+\end{tikzpicture}
+\caption{Data division for a random trivalent, bipartite graph.}
+\end{center}
+\end{figure}
+
 %%%%% MPI %%%%%
 \subsection{MPI communications}
 
@@ -493,6 +618,9 @@ The parallel implementation of this algorithm is, naturally, a little more trick
 
 The problem of how to split the data most efficiently between computing cores will be handled in this section. When we want to solve the system in parallel we have to give each processor a certain number of points on the graph. The method used to divide the data was to simply divide the nodes equally among the processors. This may seem, at first glance, as though it isn't the most efficient way to distribute the data in order to minimise the MPI communication overhead of the calculation. However, it is actually the fairest and easiest way to balance each processor's load and have a, relatively, uniform spread of MPI communications between processors.
 
+This is the fairest method because if the graph is truly random it is expect that each processor needs to communicate with, on average, the same number of nodes on each of the other processors. This division then ensures that each processor sends the same (on average) data points from itself to each other processor.
+
+The alternative to this method is to do some sort of profiling and then preconditioning of the graph and connections. The purpose of this would be to minimise the amount of data that needs to be sent between nodes. This would be a very complicated algorithm that would most likely require a lot of computation time. This large addtional overhead would greatly overshadow any of the benefits gained in the actual computation.
 
 %%% DATA DIVISION PIC %%%%%
 \begin{figure}
@@ -500,34 +628,47 @@ The problem of how to split the data most efficiently between computing cores wi
 \begin{tikzpicture}[scale=1.5]
 
 
-\node at (-1.5, 3) {Set $A$};
-\node at (1.5, 3) {Set $B$};
+\node at (-1.5, 4) {Set $A$};
+\node at (1.5, 4) {Set $B$};
 
-\node at (-2.5, 1.25) {Proc $0$};
-\node at (-2.5, -1.25) {Proc $1$};
+\node at (-2.5, 3) {Proc $0$};
+\node at (-2.5, 1) {Proc $1$};
+\node at (-2.5, -1) {Proc $2$};
+\node at (-2.5, -3) {Proc $3$};
 
+
+\draw [fill=black,very thick] (-1.5,3.5) circle (0.15cm);
 \draw [fill=black,very thick] (-1.5,2.5) circle (0.15cm);
 \draw [fill=black,very thick] (-1.5,1.5) circle (0.15cm);
 \draw [fill=black,very thick] (-1.5,0.5) circle (0.15cm);
 \draw [fill=black,very thick] (-1.5,-0.5) circle (0.15cm);
 \draw [fill=black,very thick] (-1.5,-1.5) circle (0.15cm);
 \draw [fill=black,very thick] (-1.5,-2.5) circle (0.15cm);
+\draw [fill=black,very thick] (-1.5,-3.5) circle (0.15cm);
 
+\draw [dashed] (-2.5,2) -- (2.5,2);
 \draw [dashed] (-2.5,0) -- (2.5,0);
+\draw [dashed] (-2.5,-2) -- (2.5,-2);
 
+\filldraw ([xshift=-4pt,yshift=-4pt]1.5,3.5) rectangle ++(8pt,8pt);
 \filldraw ([xshift=-4pt,yshift=-4pt]1.5,2.5) rectangle ++(8pt,8pt);
 \filldraw ([xshift=-4pt,yshift=-4pt]1.5,1.5) rectangle ++(8pt,8pt);
 \filldraw ([xshift=-4pt,yshift=-4pt]1.5,0.5) rectangle ++(8pt,8pt);
 \filldraw ([xshift=-4pt,yshift=-4pt]1.5,-0.5) rectangle ++(8pt,8pt);
 \filldraw ([xshift=-4pt,yshift=-4pt]1.5,-1.5) rectangle ++(8pt,8pt);
 \filldraw ([xshift=-4pt,yshift=-4pt]1.5,-2.5) rectangle ++(8pt,8pt);
+\filldraw ([xshift=-4pt,yshift=-4pt]1.5,-3.5) rectangle ++(8pt,8pt);
 
-\draw [very thick] (-1.5,2.5) -- (1.5,2.5);
+\draw [very thick] (-1.5,3.5) -- (1.5,2.5);
+\draw [very thick] (-1.5,3.5) -- (1.5,0.5);
+\draw [very thick] (-1.5,3.5) -- (1.5,-2.5);
+
+\draw [very thick] (-1.5,2.5) -- (1.5,3.5);
 \draw [very thick] (-1.5,2.5) -- (1.5,0.5);
-\draw [very thick] (-1.5,2.5) -- (1.5,-2.5);
+\draw [very thick] (-1.5,2.5) -- (1.5,-3.5);
 
-\draw [very thick] (-1.5,1.5) -- (1.5,2.5);
-\draw [very thick] (-1.5,1.5) -- (1.5,0.5);
+\draw [very thick] (-1.5,1.5) -- (1.5,-3.5);
+\draw [very thick] (-1.5,1.5) -- (1.5,3.5);
 \draw [very thick] (-1.5,1.5) -- (1.5,-1.5);
 
 \draw [very thick] (-1.5,0.5) -- (1.5,-1.5);
@@ -536,15 +677,19 @@ The problem of how to split the data most efficiently between computing cores wi
 
 \draw [very thick] (-1.5,-0.5) -- (1.5,1.5);
 \draw [very thick] (-1.5,-0.5) -- (1.5,-2.5);
-\draw [very thick] (-1.5,-0.5) -- (1.5,-0.5);
+\draw [very thick] (-1.5,-0.5) -- (1.5,-3.5);
 
 \draw [very thick] (-1.5,-1.5) -- (1.5,-1.5);
 \draw [very thick] (-1.5,-1.5) -- (1.5,1.5);
 \draw [very thick] (-1.5,-1.5) -- (1.5,0.5);
 
 \draw [very thick] (-1.5,-2.5) -- (1.5,-0.5);
-\draw [very thick] (-1.5,-2.5) -- (1.5,-2.5);
+\draw [very thick] (-1.5,-2.5) -- (1.5,3.5);
 \draw [very thick] (-1.5,-2.5) -- (1.5,2.5);
+
+\draw [very thick] (-1.5,-3.5) -- (1.5,-0.5);
+\draw [very thick] (-1.5,-3.5) -- (1.5,-2.5);
+\draw [very thick] (-1.5,-3.5) -- (1.5,2.5);
 
 \end{tikzpicture}
 \caption{Data division for a random trivalent, bipartite graph.}
@@ -651,6 +796,11 @@ Code was written to simulate the exact situation described above and to determin
 
 
 While the last simulation is useful for generating random graphs, it is also interesting, and possibly more useful, to examine how many swaps per node it takes for a graph to be considered random. This is interesting as this may be different for different sized graphs. To investigate this, the same simulation as above was run for varying graph sizes and a similar plot was made.
+
+\centering
+\includegraphics[scale=0.8]{swaps_per_node.jpg}
+\caption{This plot shows how the average number of connections to another processor changes with the number of swaps performed per node. The graph used was a bipartite, trivalent graph with four different graph sizes (1024, 2048, 4096 and 8192). All were run on 4 processors.}
+\end{figure}
 
 \subsubsection{Serial Vs. Parallel}
 

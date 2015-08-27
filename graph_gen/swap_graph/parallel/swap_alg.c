@@ -26,8 +26,8 @@ int main(int argc, char *argv[]){
 
 	MPI_Init(&argc,&argv);
 
-	num_nodes = 2048;
-	num_swaps = 20000;
+	num_nodes = 1024;
+	num_swaps = 2*15*num_nodes;
 	sum=0;
 
 	init_machine(argc, argv, num_nodes);
@@ -54,13 +54,17 @@ int main(int argc, char *argv[]){
 	// and the next two as neighbours 
 
 	for(i=0;i<num_nodes;i++){
-		a[i][0]=i;
-		a[i][1]=(i+1)%num_nodes;
-		a[i][2]=(i+2)%num_nodes;
+		a[i][0]=(i-1+num_nodes)%num_nodes;
+		a[i][1]=i;
+		a[i][2]=(i+1)%num_nodes;
+
+		b[i][0]=(i-1+num_nodes)%num_nodes;
+		b[i][1]=i;
+		b[i][2]=(i+1)%num_nodes;
 	}
 
 	// get set b's neighbours
-	reverse_engineer(a, b, num_nodes);
+	//reverse_engineer(a, b, num_nodes);
 
 	size_local = num_nodes/host.np;
 
