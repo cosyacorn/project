@@ -52,6 +52,7 @@
   commentstyle=\itshape\color{purple!40!black},
   identifierstyle=\color{blue},
   stringstyle=\color{orange},
+  tabsize=2,
 }
 
 \lstdefinestyle{customasm}{
@@ -524,19 +525,17 @@ The program is first initialised with MPI on the required number of processors, 
 Two typedef'd struct called \verb|Array| is initialised on each CPU, one is for the nodes in set $A$, the other for the nodes in set $B$. This structure contains the total number of nodes in the set, the local number of nodes, the offset of the array and a list of all the neighbours of the nodes held localy.
 
 \begin{lstlisting}
-typedef struct {
+typedef struct
+{
 	int x; // global number of nodes in set
-
 	int x_local; // local number of nodes in set
-
 	int x_offset; // Array offsets
-
 	int **neighbour; // array of neighbouring points
 }
 Array;
 \end{lstlisting}
 
-The element \verb|**neighbour| is a two dimensional array. Its size is determined at run-time by the size of the graph, number of processors and the number of neighbours each point has. The first index, $i$, is the local index of a node in the array, the second index, $j$, is the index of $i$'s $j$^{th} neighbour. So if we have an array for set $A$ denoted simply by \verb|a| then \verb|a->neighbour[i][j]| gives the global index of the $j^{th}$ neighbour of $i$. $i$'s global index is given by: \verb|i_global = a->x_local*a->x_offset + i|.
+The element \verb|**neighbour| is a two dimensional array. Its size is determined at run-time by the size of the graph, number of processors and the number of neighbours each point has. The first index, $i$, is the local index of a node in the array, the second index, $j$, is the index of $i$'s $j^{th}$ neighbour. So if we have an array for set $A$ denoted simply by \verb|a| then \verb|a->neighbour[i][j]| gives the global index of the $j^{th}$ neighbour of $i$. $i$'s global index is given by: \verb|i_global = a->x_local*a->x_offset + i|.
 
 The array is initialised into a double ring configuration by default. The reason for this is that it is very simple to set up. Each node's neighbours are simply the points with global indices $n-1$, $n$ and $n+1$ all in set $B$, if we are considering the node with global index $n$ in set $A$.
 
@@ -549,7 +548,7 @@ A similar struct to \verb|Array|, called \verb|Field| is then initialised. Like 
 typedef struct
 {
 	int *value;	// vals for points on local process
-	int *halo_count; // number of data points to be recived from each proc
+	int *halo_count; // no of points recived from each proc
 	int **halo;	// vals of data recieved from each proc	
 }
 Field;
@@ -559,55 +558,12 @@ The \verb|*halo_count| array is the same size of the number of processors that t
 
 Finally, the two dimensional array \verb|**halo| is the array that actually holds the values that are sent to the host process from the other processors. The first index of this array denotes the process from which the data is to be received from. The second index is the counter for the recieved data. Continuing with the example from the last paragraph, if we have \verb|if(host.rank == 0) f_a->halo_count[2] = 7| then \verb|if(host.rank == 0) f_a->halo[2][j]| has 7 elements, where $j$ determines which value is which, when the data is received.
 
-The next step is to malloc space for the points needed from other procs to be stored locally on the host proc.
+The number of data points that need to be sent from each processor to every other processor is then computed (more on this method later). The next step is to malloc space for the points needed from other procs to be stored locally on the host proc.
+
+At this point it is known on each processor how many nodes are needed from each of the other processes in order to complete an up date step. Before each update step is started, all the values that must be sent from one process to another must be completed. This sending of data requires loading the relevant values into a send buffer, sending them to their correct destination with an MPI call. These values are received into a receive buffer and are then copied into the the halo array of the field struct (all of this is explained in more detail further on). The update step then calls the values from this halo when they are needed.
 
 
-\begin{figure}
-\begin{center}
-\begin{tikzpicture}[scale=1.5]
 
-\node at (-1.5, 3) {Set $A$};
-\node at (1.5, 3) {Set $B$};
-
-\node at (-3, 3) {Proc $0$};
-\node at (-3, 1) {Proc $1$};
-\node at (-3, -1) {Proc $2$};
-
-\node at (-2.5, 2.5) {$0 (0)$};
-\node at (-2.5, 1.5) {$1 (1)$};
-\node at (-2.5, 0.5) {$0 (2)$};
-\node at (-2.5, -0.5) {$1 (3)$};
-\node at (-2.5, -1.5) {$0 (4)$};
-\node at (-2.5, -2.5) {$1 (5)$};
-
-\draw [fill=black,very thick] (-1.5,2.5) circle (0.15cm);
-\draw [fill=black,very thick] (-1.5,1.5) circle (0.15cm);
-\draw [fill=black,very thick] (-1.5,0.5) circle (0.15cm);
-\draw [fill=black,very thick] (-1.5,-0.5) circle (0.15cm);
-\draw [fill=black,very thick] (-1.5,-1.5) circle (0.15cm);
-\draw [fill=black,very thick] (-1.5,-2.5) circle (0.15cm);
-
-\draw [dashed] (-2.5,1) -- (2.5,1);
-\draw [dashed] (-2.5,-1) -- (2.5,-1);
-
-\filldraw ([xshift=-4pt,yshift=-4pt]1.5,2.5) rectangle ++(8pt,8pt);
-\filldraw ([xshift=-4pt,yshift=-4pt]1.5,1.5) rectangle ++(8pt,8pt);
-\filldraw ([xshift=-4pt,yshift=-4pt]1.5,0.5) rectangle ++(8pt,8pt);
-\filldraw ([xshift=-4pt,yshift=-4pt]1.5,-0.5) rectangle ++(8pt,8pt);
-\filldraw ([xshift=-4pt,yshift=-4pt]1.5,-1.5) rectangle ++(8pt,8pt);
-\filldraw ([xshift=-4pt,yshift=-4pt]1.5,-2.5) rectangle ++(8pt,8pt);
-
-
-\draw [very thick] (-1.5,0.5) -- (1.5,2.5);
-\draw [very thick] (-1.5,-0.5) -- (1.5,1.5);
-
-\draw [very thick] (-1.5,0.5) -- (1.5,-1.5);
-\draw [very thick] (-1.5,0.5) -- (1.5,-2.5);
-
-\end{tikzpicture}
-\caption{Data division for a random trivalent, bipartite graph.}
-\end{center}
-\end{figure}
 
 %%%%% MPI %%%%%
 \subsection{MPI communications}
@@ -698,8 +654,110 @@ The alternative to this method is to do some sort of profiling and then precondi
 
 %%%%%%%%%%%%% END OF PIC %%%%%%%%%%%%%%
 
+\subsubsection{Setting up Halo Regions}
+
+To understand why the halo region is needed and how it works, it is easiest to use a picture. Consider the graph shown in figure FILL. It shows two bipartite sets each with six nodes. The graph is divided over three processors. We are going to consider performing an update on the nodes in set $A$ hosted on processor 1. The figure only shows the edges that connect the nodes in set $A$ on process 1 to nodes that are not on process 1. All other nodes are not shown as they aren't necessary in understanding the method.
+
+%%%%% SET UP HALO PICTURE %%%%%
+\begin{figure}
+\begin{center}
+\begin{tikzpicture}[scale=1.5]
+
+\node at (-1.5, 3) {Set $A$};
+\node at (1.5, 3) {Set $B$};
+
+\node at (-3, 2) {Proc $0$};
+\node at (-3, 0) {Proc $1$};
+\node at (-3, -2) {Proc $2$};
+
+\node at (-2, 2.5) {$0 (0)$};
+\node at (-2, 1.5) {$1 (1)$};
+\node at (-2, 0.5) {$0 (2)$};
+\node at (-2, -0.5) {$1 (3)$};
+\node at (-2, -1.5) {$0 (4)$};
+\node at (-2, -2.5) {$1 (5)$};
+
+\draw [fill=black,very thick] (-1.5,2.5) circle (0.15cm);
+\draw [fill=black,very thick] (-1.5,1.5) circle (0.15cm);
+\draw [fill=black,very thick] (-1.5,0.5) circle (0.15cm);
+\draw [fill=black,very thick] (-1.5,-0.5) circle (0.15cm);
+\draw [fill=black,very thick] (-1.5,-1.5) circle (0.15cm);
+\draw [fill=black,very thick] (-1.5,-2.5) circle (0.15cm);
+
+\draw [dashed] (-2.5,1) -- (2.5,1);
+\draw [dashed] (-2.5,-1) -- (2.5,-1);
+
+\filldraw ([xshift=-4pt,yshift=-4pt]1.5,2.5) rectangle ++(8pt,8pt);
+\filldraw ([xshift=-4pt,yshift=-4pt]1.5,1.5) rectangle ++(8pt,8pt);
+\filldraw ([xshift=-4pt,yshift=-4pt]1.5,0.5) rectangle ++(8pt,8pt);
+\filldraw ([xshift=-4pt,yshift=-4pt]1.5,-0.5) rectangle ++(8pt,8pt);
+\filldraw ([xshift=-4pt,yshift=-4pt]1.5,-1.5) rectangle ++(8pt,8pt);
+\filldraw ([xshift=-4pt,yshift=-4pt]1.5,-2.5) rectangle ++(8pt,8pt);
 
 
+\draw [very thick] (-1.5,0.5) -- (1.5,2.5);
+\draw [very thick] (-1.5,-0.5) -- (1.5,2.5);
+
+\draw [very thick] (-1.5,0.5) -- (1.5,-1.5);
+\draw [very thick] (-1.5,0.5) -- (1.5,-2.5);
+
+\end{tikzpicture}
+\caption{FILL}
+\end{center}
+\end{figure}
+%%%%% END HALO PICTURE %%%%%
+
+We start by looking at the nodes in set $A$, on process 1, and where this data is needed. First we looping over the array of neighbours of nodes in set $A$. First the neighbours of point 0 (global index 2) are examined. It has neighbours 0, 4 and 5 (global indices). Point 0 is on process 0, and points 4 and 5 are on process 2. So at this stage, on process 1 we know that \verb|send_count[0]=1| and \verb|send_count[2]=1|.
+
+Since point 0 is connected to both 4 and 5 in set $B$ we have a double count which has to be ignored. Once we know that we need to send a point's data to another proc it is marked that it is needed and will not be sent again. To keep track of double counts like this we need a two dimensional array \verb|**double count|. The first index is for the local index of a node and the second is for the process that the data is to be sent to. So for node 0 on process 1 we have \verb|double_count[0][2]=1|. Initially this is value is zero to say that point is not needed on process 1, but when we find that point 4 needs that value we set the double count entry to 1 to mark the value as counted for. So then when the program realises that point 5 also needs point 0 from process 1 we do not need to copy it again because we have marked it as copied already.
+
+Then point 1 is looked at. Its only connection to another process is to point 0 (global index). Point zero is on process 0 and we have that \verb|double_count[1][0]=0| so we are free to increase the send count to process 0: \verb|send_count[0]=2|.
+
+That is all the neighbours looped over and we know how many points process 0 has to send to each other process. Importantly, there has been no double counting, while it may not have been a big deal in this small example, but for a bigger graph it could mean allocating space for thousands more data points and then performing MPI calls for all of the double counted values. This would add up very quickly over the course of a big simulation and lead to an unnecessarily large MPI communication overhead that would have a big performance impact.
+
+Below is the code snippet for this procedure.
+
+
+\begin{lstlisting}
+	for(i=0;i<a->x_local;i++){
+		for(j=0;j<3;j++){
+		proc = a->neighbour[i][j]/a->x_local;
+			if(double_count[i][proc] == 0){
+				// determine if neighbour is on a different proc
+				if(a->neighbour[i][j] < host.rank*a->x_local || a->neighbour[i][j] >= (host.rank+1)*a->x_local){
+					send_count[proc]++; // increase count if on diff proc
+					double_count[i][proc] = 1;
+				}
+			}
+		}
+	}
+\end{lstlisting}
+
+
+At this stage it is known on process 1 how many of its local data points need to be sent to other processors. However, the other processors do not yet know how much data they will be receiving from every other process. For example process 0 does not yet know that it will be 2 data points from process 1. The recevie count array for each process tell it how many data points will be received from each other process. For example, on process 0 \verb|recv_count[1]| holds the number of data points that are to be received from process 1. These receive counts should match the send counts on the sending process with the destination process as the index. So on process 1 \verb|send_count[0]=2|, therefore we must have \verb|recv_count[1]=2| on process 0.
+
+Instead of doing some sort of similar counting algorithm as was done to find the send count, it is much easier to use the \verb|MPI_Alltoall| command. This command will send take an array in the send buffer and a send count, $x$. It then sends the first $x$ elements of the array to process 0 the second $x$ to process 1 and so on. A receive count is also specified with a receive buffer telling the program what to do with the received data.
+
+\begin{lstlisting}
+	MPI_Alltoall(send_count, 1, MPI_INT, recv_count, 1, MPI_INT, MPI_COMM_WORLD);
+\end{lstlisting}
+
+Now that each processor knows how many data points it will receive from every other process the memory can be allocated to store this incoming data:
+
+\begin{lstlisting}
+	for(i=0;i<num_proc;i++)
+		f_a->halo_count[i] = recv_count[i];
+
+	f_a->halo = (int**)malloc(sizeof(int *)*host.np);
+
+	for(i=0;i<num_proc;i++){
+		if(f_a->halo_count[i] != 0){
+			f_a->halo[i] = (int*)malloc(sizeof(int)*f_a->halo_count[i]);
+		} else {
+			f_a->halo[i] = NULL;
+		}
+	}
+\end{lstlisting}
 
 %%%%% PROBLEMS ENCOUNTERED IN IMPLEMENTATION %%%%%
 
@@ -797,8 +855,9 @@ Code was written to simulate the exact situation described above and to determin
 
 While the last simulation is useful for generating random graphs, it is also interesting, and possibly more useful, to examine how many swaps per node it takes for a graph to be considered random. This is interesting as this may be different for different sized graphs. To investigate this, the same simulation as above was run for varying graph sizes and a similar plot was made.
 
+\begin{figure}
 \centering
-\includegraphics[scale=0.8]{swaps_per_node.jpg}
+\includegraphics[scale=0.6]{swaps_per_node.jpg}
 \caption{This plot shows how the average number of connections to another processor changes with the number of swaps performed per node. The graph used was a bipartite, trivalent graph with four different graph sizes (1024, 2048, 4096 and 8192). All were run on 4 processors.}
 \end{figure}
 
