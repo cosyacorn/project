@@ -19,11 +19,11 @@ int main(int argc, char * argv[]){
 	Array *a, *b;
 	Field *f_a, *f_b;
 
-	num_nodes=3200;
+	num_nodes=4096;
 	beta=0.001;
 	num_updates=1000;
-	num_swaps=27*2*num_nodes;
-//	num_swaps=0;
+//	num_swaps=27*2*num_nodes;
+	num_swaps=0;
 
 	MPI_Init(&argc,&argv);
 
@@ -57,14 +57,14 @@ int main(int argc, char * argv[]){
 
 	pprintf("%Z#beta:\tavg magnetisation:\n");
 
-	for(beta=0.01;beta<1.00;beta+=0.01){
+	for(beta=0.1;beta<=10.00;beta+=0.1){
 		avg=0.0;
 		for(i=0;i<num_updates;i++){
 			update(size, f_a, f_b, beta, a, b); 
 			avg += (magnetisation(f_a,a) + magnetisation(f_b,b))/2.0;
 		}
 
-		//pprintf("%Z%lf\t%lf\n",beta,avg/(double) num_updates);
+		pprintf("%Z%lf\t%lf\n",beta,avg/(double) num_updates);
 	}
 
 

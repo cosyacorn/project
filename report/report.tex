@@ -800,6 +800,83 @@ typedef struct {
 
 The \verb|init_comm| function initialises the boundary communicator on each process and sets values for the send and receive counts. This is done using the exact same method as before when the halo space was initialised, with the doubele count array taking care of points being double counted as before. The send and receive counts are then used to malloc the send and receive buffers.
 
+The \verb|send| function is the function responsible for loading the relevant data into the send buffer, sending the data to the correct process and receiving the data into the receive buffer. On each process, the neighbours of the points hosted on that process are looped over, as before. This time though it is ensured that each point to be loaded into the send buffer has the following condition met: \verb|c->double_count[point][proc]=1|. This is because, previously it was only points that were to be sent got this flag in their entry of the double count array. Once a point has been loaded to the buffer this value is set back to 0 so that it can't be loaded twice. It is simply to ensure that only the points that need to be sent are loaded into the buffer. The loop that carries out this operation is:
+
+\begin{lstlisting}
+for(i=0;i<a->x_local;i++){
+		for(j=0;j<3;j++){
+			proc = a->neighbour[i][j]/a->x_local;
+			if(c->double_count[i][proc] == 1 ){
+					// copy value into buffer
+					if(f_a->value[i] == -1){
+						val = 0;
+					} else {
+						val = 1;
+					}
+					c->buffer_send[proc][k[proc]] = 2*i + val;
+					k[proc]++; // increase relavant buff index
+					c->double_count[i][proc] = 0; // mark as loaded to buff
+				}
+			}
+		}
+\end{lstlisting} 
+
+There is a slight problem with loading the values in to the buffer: the values will be loaded in a random order that is determined by to the order in which the neighbours appear on the array of neighbours. When it is then unpacked by a different processor this order remains. However running the same loop on the receiving process may (actaully, most certainly will for large random graphs) require the data to read out in a different order than it was fed in. For this reason a simple `first-in-first-out' method will not work. The most basic solution would be to send both the global index of a point with its spin value. However this doubles the already large amount of data that has to be sent. Instead it is more efficient to encode the index of the node \emp{and} its spin value into one \verb|int|.
+
+This is done by simply doubling the value of the local index and adding 1 if it is spin up and not adding anything if it is spin down. This way when the data is received this small algorithm is simply reversed to give the spin and the node from where the data originated.
+
+The data is sent and received using the non-blocking MPI calls \verb|MPI_Isend| and \verb|MPI_Irecv|. 
+
+\begin{lstlisting}
+	for(i=0;i<num_proc;i++){
+		if(host.rank !=i){
+			MPI_Isend((c->buffer_send[i]), c->send_count[i], MPI_INT, i, 100*host.rank, MPI_COMM_WORLD, send_ptr);
+			send_ptr++;
+			MPI_Irecv((c->buffer_recv[i]), c->recv_count[i], MPI_INT, i, 100*i, MPI_COMM_WORLD, recv_ptr);
+			recv_ptr++;
+		}
+	}
+	MPI_Waitall(host.np-1, send, send_status);
+	MPI_Waitall(host.np-1, recv, recv_status);
+\end{lstlisting}
+
+At this stage the data has been sucessfully sent to the receiving processes and is ready to be unpacked into the the halo array that was created earlier. This simply involves the copying of the data into the halo:
+
+\begin{lstlisting}
+	for(i=0;i<host.np;i++){
+		for(j=0;j<c->recv_count[i];j++){
+			f_a->halo[i][j] = c->buffer_recv[i][j];
+		}
+	}
+}
+\end{lstlisting}
+
+The reversing of the encoding used to send the data is done later when the  data is actually needed for the update. The reason for not doing the decoding now is that then both the node and the spin need to be stored seperately in such a way that would allow easy access. However this is actually a hard procedure to implement and would save very little time in the computation. The algorithm for decoding the data is:
+
+\begin{lstlisting}
+for(i=0;i<size;i++){
+	for(j=0;j<3;j++){
+		// determine if neighbour is local or on another proc
+		if(a->neighbour[i][j] < host.rank*size || a->neighbour[i][j] >= (host.rank+1)*size){
+			// set spin1 to halo
+			k=0; // set index to zero		
+			proc = a->neighbour[i][j]/size; // first index determines the rank of proc
+			while(f_b->halo[proc][k]/2 != a->neighbour[i][j]%a->x_local){
+				k++;
+			}
+			val = f_b->halo[proc][k]%2;
+			if( val == 0){
+				spin[j] = -1;
+			} else {
+				spin[j] = 1;
+			}
+		} else { 
+			spin[j] = f_b->value[a->neighbour[i][j]%size];
+		}
+	}
+}
+\end{lstlisting}
+
 %%%%% PROBLEMS ENCOUNTERED IN IMPLEMENTATION %%%%%
 
 
