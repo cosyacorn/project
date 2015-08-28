@@ -144,11 +144,20 @@ This project is centered around doing Ising Model simulations on random bipartit
 
 \subsection{The Ising Model}
 
+
+%%%%% WHAT IS ISING MODEL %%%%%
+
 \subsubsection{What is the Ising Model?}
 
 The Ising Model is a mathematical model that was invented by Wilhelm Lenz, but developed by Ernst Ising in 1925. It is used to to explore ferromagnetism in statistical physics.
 
+
+%%%%% ANALYTICAL TOOLS %%%%%
+
 \subsubsection{Analytical tools used for studying the Ising Model}
+
+
+%%%%% COMPUTATION METHODS %%%%%
 
 \subsubsection{How it is normally studied in serial and parallel simulations}
 
@@ -308,6 +317,7 @@ A random graph is a graph where the edges connect vertices at random; there is n
 \subsection{Aims}
 
 \newpage
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%% SOFTWARE ARCHITECTURE %%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -316,11 +326,12 @@ A random graph is a graph where the edges connect vertices at random; there is n
 
 In this section I will discuss the various techniques used in creating the simulations that were run in the duration of this project. The main areas these fall under are: graph generating - in both serial and parallel, as well as associated swap algorithms; MPI communication structure; and, finally, how the update step worked.
 
+%%%%% RANDOM GRAPH GENERATION %%%%%
 \subsection{Random graph generation}
 
 Over the course of this project numerous different methods were implemented and compared for the `best' way to create a random bipartite graph. These methods were written in both serial and parallel.
 
-%%%%% RANDOM GRAPHS %%%%%
+%%%%% RANDOM GRAPHS IN SERIAL %%%%%
 \subsubsection{Generating random graphs in serial}
 
 There were two methods employed to generate random graphs over the course of this project. The first method (which we will call \emph{simple generation}) was not used as often as it could not be generalised as easily to parallel code and is only applicable for generating bipartite, trivalent graphs. The second method is the swap algorithm which is discussed in detail in the following subsection.
@@ -516,6 +527,9 @@ The parallel implementation of this algorithm is, naturally, a little more trick
 
 %%%%%%%% END OF ALG %%%%%%%%
 
+
+%%%%% OVERVIEW OF PARALLEL SIMULATION %%%%%
+
 \subsection{General Overview of Parallel Simulation}
 
 In this section a general overview of how the code written for this project works. In the following sections some of the more complicated steps will be explained in greater detail.
@@ -569,7 +583,7 @@ At this point it is known on each processor how many nodes are needed from each 
 \subsection{MPI communications}
 
 
-
+%%%%% DATA DIVISION %%%%%
 \subsubsection{Data division and load balancing}
 
 The problem of how to split the data most efficiently between computing cores will be handled in this section. When we want to solve the system in parallel we have to give each processor a certain number of points on the graph. The method used to divide the data was to simply divide the nodes equally among the processors. This may seem, at first glance, as though it isn't the most efficient way to distribute the data in order to minimise the MPI communication overhead of the calculation. However, it is actually the fairest and easiest way to balance each processor's load and have a, relatively, uniform spread of MPI communications between processors.
@@ -578,7 +592,8 @@ This is the fairest method because if the graph is truly random it is expect tha
 
 The alternative to this method is to do some sort of profiling and then preconditioning of the graph and connections. The purpose of this would be to minimise the amount of data that needs to be sent between nodes. This would be a very complicated algorithm that would most likely require a lot of computation time. This large addtional overhead would greatly overshadow any of the benefits gained in the actual computation.
 
-%%% DATA DIVISION PIC %%%%%
+
+%%%%% DATA DIVISION PIC %%%%%
 \begin{figure}
 \begin{center}
 \begin{tikzpicture}[scale=1.5]
@@ -653,6 +668,11 @@ The alternative to this method is to do some sort of profiling and then precondi
 \end{figure}
 
 %%%%%%%%%%%%% END OF PIC %%%%%%%%%%%%%%
+
+
+
+
+%%%%% SETTING UP HALO REGIONS %%%%%
 
 \subsubsection{Setting up Halo Regions}
 
@@ -758,6 +778,14 @@ Now that each processor knows how many data points it will receive from every ot
 		}
 	}
 \end{lstlisting}
+
+
+
+
+\subsubsection{Sending Data Between Processors}
+
+
+
 
 %%%%% PROBLEMS ENCOUNTERED IN IMPLEMENTATION %%%%%
 
