@@ -22,8 +22,8 @@ int main(int argc, char * argv[]){
 	num_nodes=3200;
 	beta=0.001;
 	num_updates=1000;
-//	num_swaps=27*2*num_nodes;
-	num_swaps=0;
+	num_swaps=27*2*num_nodes;
+//	num_swaps=0;
 
 	MPI_Init(&argc,&argv);
 
@@ -64,7 +64,7 @@ int main(int argc, char * argv[]){
 			avg += (magnetisation(f_a,a) + magnetisation(f_b,b))/2.0;
 		}
 
-		pprintf("%Z%lf\t%lf\n",beta,avg/(double) num_updates);
+		//pprintf("%Z%lf\t%lf\n",beta,avg/(double) num_updates);
 	}
 
 
@@ -73,7 +73,7 @@ int main(int argc, char * argv[]){
 	pprintf("%Z#total time taken: %lf\n", t2-t1);
 	pprintf("%Z#Machine geometry: %d nodes in each set (%d total nodes)  on %d procs. %d nodes per proc\n",host.num_nodes_tot, 2*host.num_nodes_tot, host.np, host.num_nodes_local);
 		if(num_swaps != 0)
-			pprintf("%#Znumber of swaps done to create random graph: %d\n", num_swaps);
+			pprintf("%Znumber of swaps done to create random graph: %d\n", num_swaps);
 		else
 			pprintf("%Z#no swaps done. Graph is double ring graph\n");
 		pprintf("%Z#number of update steps: %d\n", num_updates);	

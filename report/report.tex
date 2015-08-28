@@ -780,12 +780,25 @@ Now that each processor knows how many data points it will receive from every ot
 \end{lstlisting}
 
 
-
+%%%%% SENDING DATA BETWEEN PROCESSORS %%%%%
 
 \subsubsection{Sending Data Between Processors}
 
+Now that the space for the data to be sent to has been allocated on each process, we can now load the data points into the relevant send buffer, send it, receive it and unpack it into the space we allocated in the previous section. This is implemented through a set of communicator functions for each stage described above.
 
+The first part of this implementation is defining a typedef'd struct called \verb|BoundaryComm|. This will be initialised on each processor and hold:  the send and receive counts to/from each other processor, the send and receive buffers for storing the data to be sent/once it's received, and the double count array that works as before to avoid the over sending of data points. 
 
+\begin{lstlisting}
+typedef struct {
+	int *send_count;
+	int *recv_count;
+	int **buffer_send;
+	int **buffer_recv;
+	int **double_count;
+} BoundaryComm; 
+\end{lstlisting}
+
+The \verb|init_comm| function initialises the boundary communicator on each process and sets values for the send and receive counts. This is done using the exact same method as before when the halo space was initialised, with the doubele count array taking care of points being double counted as before. The send and receive counts are then used to malloc the send and receive buffers.
 
 %%%%% PROBLEMS ENCOUNTERED IN IMPLEMENTATION %%%%%
 
