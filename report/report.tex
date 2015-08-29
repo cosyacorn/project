@@ -112,6 +112,8 @@
 %%%%% ABSTRACT %%%%%
 %%%%%%%%%%%%%%%%%%%%
 
+
+
 \vspace*{\fill}
 \begin{abstract}
 
@@ -151,10 +153,50 @@ This project is centered around doing Ising Model simulations on random bipartit
 
 The Ising Model is a mathematical model that was invented by Wilhelm Lenz, but developed by Ernst Ising in 1925. It is used to to explore ferromagnetism in statistical physics.
 
+\emph{Statistical physics} refers to the method by which microscopic laws of physics are used to create an understanding of Nature on a macroscopic scale. It is a branch of physics that relies on probability theory and statistics to solve physical problems with large population sizes. It is used to describe a wide spectrum of problems that are inherently stochastic.
 
-%%%%% ANALYTICAL TOOLS %%%%%
+The Ising model consists of discrete variables that represent the magnetic dipole moments of atomic spins. These are the intrinsic magnetic moments possessed by every electron and can take the values $\pm1$. A spin of $+1$ is called \emph{spin up} and represented by: $\uparrow$. While a spin of $-1$ is called \emph{spin down} and represented by $\downarrow$. The magnetic phenomena in some materials is ca
+used by the quantum-mechanical ‘spin’ of electrons.
 
-\subsubsection{Analytical tools used for studying the Ising Model}
+The model is usually represented on a rectangular lattice. Each lattice point represents an atom in the material and is assigned a spin value at the begining of the calculation (usually a random value assignment, but can also be an ordered assignment where all spins are initialised to spin up, say).
+
+Considering a lattice, denoted by $\lambda$, at each lattice site $k$ there is a discrete spin value, $\sigma_k$, such that $\sigma_k \in \{-1,+1\}$. We call a spin configuration the assignment of a spin value to each of the lattice sites.
+
+For a pair of adjacent sites $i,j$, there is the interaction $J_{ij}$. If there is an external magnetic field interacting with sit $j$ we denote it by $h_j$. The energy of a configuration $\sigma$ is given by the Hamiltonian function:
+
+\[ H(\sigma) = - \sum_{nn(i,j)} J_{ij} \sigma_i \sigma_j - \mu \sum_{j} h_j \sigma_j \]
+
+The first sum is for pairs of adjacent spins (each pair counted once), where the notation $nn(i,j)$ means that $i$ and $j$ are nearest neighbours. $\mu$ is the magnetic moment.
+
+For the duration of this project we will be discussing the case with no external magnetic field, $h_j = 0$. So the Hamiltonian is simply:
+
+\[ H(\sigma) = - \sum_{nn(i,j)} J_{ij} \sigma_i \sigma_j  \]
+
+We will also restrict ourselves to the ferromagnetic case, where $J_{ij} > 0$. In a ferromagnetic Ising model spins seek a configuration such that they are all aligned. We will also have the same interaction for all pairs: $J_{ij} = J$
+
+The Boltzmann distribution gives the configuration probability:
+
+\[ P_{\beta}(\sigma) = \frac{e^{-\beta H(\sigma)}}{Z_{\beta}} \].
+
+Where $\beta = \frac{1}{k_B T}$, the inverse of the product of the Boltzmann constant and the temperature. The normalisation constant $Z_{\beta} = \sum_{\sigma} e^{-\beta H(\sigma)}$ is the \emph{partition function}.
+
+The partition function is of central importance in statistical physics. It describes the statistical properties of a system in thermodynamic equilibrium. Many of the thermodynamic variables of a system can be described through the partition function or its derivatives.
+
+To update a point the Metropolis Hastings algorithm is used to update each point on the graph. To update one node, $i$, its Hamiltonian is first calculated. This is simply given by:
+
+\[ H(\sigma_i) = \sum_{nn(ij)} \delta_{ij}, \]
+
+where $\delta_{ij}$ is the kronecker delta: 
+
+\[ \delta_{ij} = \left\{ \begin{array}{ll}
+         1 & \mbox{if $i = j$};\\
+        0 & \mbox{if $i \neq j$}.\end{array} \right. \]
+
+Once the Hamiltonian is calculated, a spin filp for point $i$ is proposed. This involves simply flipping its current spin. So if it has spin up it gets changed to spin down and vice versa. The Hamiltonian is then calculated for this new proposed spin.
+
+If the value of the new Hamiltonian is strictly less than that of the original Hamiltonian the proposed spin flip is accepted. If not, the proposed spin flip is accepted with probability $e^{-2 \beta (H_{new} - H_{old})}$. One `sweep' or update consists of doing this for all of the spins on the graph.
+
+Below a certain temperature, know as the \emph{Curie temperature}, $T_C$, the spins will spontaneously align. This is know as the phase transition. It can be show that for the one dimensional Ising model there is no phase transition. It can also be shown analytically that there is a phase transition for the two dimensional lattice Ising model.
 
 
 %%%%% COMPUTATION METHODS %%%%%
@@ -163,9 +205,9 @@ The Ising Model is a mathematical model that was invented by Wilhelm Lenz, but d
 
 The two dimenstional Ising model is usually represented as a rectangular lattice, sometimes with periodic boundary conditions and sometimes not, depending on the case in question. Each point on the lattice is assigned a spin at the start of the simulation, usually at random. Each point only `feels' the interaction of its nearest neighbours (each point has four neighbours). These interactions allow a Hamiltonian to be calculated for each point.
 
-FILL ABOUT METROPOLIS HASTINGS AND UPDATING POINTS
+In parallel we divide the grid up into smaller subgrids. In figure FILL, the grid is divided into four subgrids but obviously more subdivisions are possible. Normally we have one subgrid per processor that we intend to run the program on. The need for \emph{Message Passing Interface} (MPI) function calls arises from the fact that on the edges of our subgrids there are points needed for the update step whose values are stored on another processor. These values need to be identified and passed to the relevant processor. MPI is used for this task. The easiest method is to load all the `halo' data into a buffer and send it with MPI send from the sending process to the receiving one that calls MPI receive. This send/receive is to be done between each update step.
 
-In parallel we divide the grid up into smaller subgrids. In the figure, the grid is divided into four subgrids but obviously more subdivisions are possible. Normally we have one subgrid per processor that we intend to run the program on. The need for \emph{Message Passing Interface} (MPI) function calls arises from the fact that on the edges of our subgrids there are points needed for the update step whose values are stored on another processor. These values need to be identified and passed to the relevant processor. MPI is used for this task.
+
 
 %%%%% REGULAR LATTICE ISING PIC %%%%%
 \begin{figure}
@@ -243,9 +285,14 @@ In parallel we divide the grid up into smaller subgrids. In the figure, the grid
 \draw [fill=black,very thick] (2.5,2.5) circle (3pt);
 
 \end{tikzpicture}
-\caption{Regular square lattice Ising model.}
+\caption{Regular square lattice Ising model. The nodes inside the blue rectangle show the data points on process 1 that are needed on process 3 in order to complete an update step. The green rectangle has the points on process 3 that are to be sent to process 1.}
 \end{center}
 \end{figure}
+
+It is worth noting at this stage that the square latice is also a bipartite graph. It is possibl to pick a point and say that it is in set $A$, then label all four of its nearest neighbours as being in set $B$. Each of these points in B will have three other neighbours (ignoring the initial point chosen), and these three neighbours are labeled as being in set $A$. This process is then continued until all the points are labeled in one set or the other. This is commonly called \emph{red-black ordering}.
+
+The red-black ordering essentially gives two interlocking grids. To update a point on one grid only points on the other grid must be known. This means that one grid can be updated independently of the other. This is very useful as it means that when it comes to writing code for the problem this property can be taken advantage of in order to cut the computation time.
+
 
 %%%%% GRAPH THEORY %%%%%
 
@@ -263,7 +310,7 @@ A random graph is a graph where the edges connect vertices at random; there is n
 
 \begin{figure}
 \begin{center}
-\begin{tikzpicture}[scale=1.5]
+\begin{tikzpicture}[scale=1.75]
 
 \node at (-1.5, 2) {Set $A$};
 \node at (1.5, 2) {Set $B$};
@@ -299,22 +346,112 @@ A random graph is a graph where the edges connect vertices at random; there is n
 \caption{A random bipartite trivalent graph.}
 \end{center}
 \end{figure}
+%%%%% END OF FIGURE %%%%%
+
+
+
+
+%%%%% DOUBLE RING GRAPH %%%%%
+
+\subsubsection{Double Ring Graph}
+
+One ordered graph that will also be studied in the course of this project is the `double ring graph'. It is called this as the points can be visualised as two rings with one's centre directly above the other. Each have nodes uniformly spaced over their perimeter with the nodes on the bottom ring being connected to the nodes directly above them. each node is also connected to its two adjacent nodes on its ring. This graph is both trivalent and bipartite. Obviously, it is not considered to be random due to its very clear ordering pattern.
+
+An alternative way of viewing the double ring graph is shown in figure FILL. The reason for representing the graph this way is that it is much easier to see all the nodes and connections on paper. Note that periodic boundary conditions are in place in this graph.
+
+%%%%%%%%%%% DOUBLE RING PICTURE %%%%%%%%%%
+
+\begin{figure}
+\begin{center}
+\begin{tikzpicture}[scale=1.5]
+
+\draw [fill=black,very thick] (-2.5,1) circle (0.15cm);
+\draw [fill=black,very thick] (-1.5,-1) circle (0.15cm);
+\draw [fill=black,very thick] (-0.5,1) circle (0.15cm);
+\draw [fill=black,very thick] (0.5,-1) circle (0.15cm);
+\draw [fill=black,very thick] (1.5,1) circle (0.15cm);
+\draw [fill=black,very thick] (2.5,-1) circle (0.15cm);
+
+\filldraw ([xshift=-4pt,yshift=-4pt] -2.5,-1) rectangle ++(8pt,8pt);
+\filldraw ([xshift=-4pt,yshift=-4pt] -1.5,1) rectangle ++(8pt,8pt);
+\filldraw ([xshift=-4pt,yshift=-4pt] -0.5,-1) rectangle ++(8pt,8pt);
+\filldraw ([xshift=-4pt,yshift=-4pt] 0.5,1) rectangle ++(8pt,8pt);
+\filldraw ([xshift=-4pt,yshift=-4pt] 1.5,-1) rectangle ++(8pt,8pt);
+\filldraw ([xshift=-4pt,yshift=-4pt] 2.5,1) rectangle ++(8pt,8pt);
+
+\draw [very thick] (-3,1) -- (3,1);
+\draw [very thick] (-3,-1) -- (3,-1);
+
+\draw [very thick] (-2.5,1) -- (-2.5,-1);
+\draw [very thick] (-2.5,1) -- (-1.5,1);
+
+\draw [very thick] (-1.5,1) -- (-1.5,-1);
+\draw [very thick] (-1.5,1) -- (-1.5,-1);
+
+\draw [very thick] (-0.5,1) -- (-0.5,-1);
+\draw [very thick] (-0.5,1) -- (-0.5,-1);
+
+\draw [very thick] (0.5,1) -- (0.5,-1);
+\draw [very thick] (0.5,1) -- (0.5,-1);
+
+\draw [very thick] (1.5,1) -- (1.5,-1);
+\draw [very thick] (1.5,1) -- (1.5,-1);
+
+\draw [very thick] (2.5,1) -- (2.5,-1);
+\draw [very thick] (2.5,1) -- (2.5,-1);
+
+\draw [->][dashed, very thick] (3,0) to (4,0);
+\draw [->][dashed, very thick] (-3,0) to (-4,0);
+
+\end{tikzpicture}
+\caption{Double ring bipartite graph. The circular nodes belong to set $A$ and the square nodes to set $B$. The dashed lines represent that the graph loops back around on itself and one end joins the other (periodic boundary conditions).}
+\end{center}
+\end{figure}
+
+%%%%%%%%% END OF PIC %%%%%%%%%%%%%%
+
+
+
+%%%%% OUTLINE OF PROBLEM %%%%%
+
+\subsection{Outline of Problem}
+
+The problem being considered during this project is that of assigning spin values ($\pm1$) to each node on the graph. The nodes that any given node interacts with is determined by the edges a node has. These are called a node's neighbours, and are essential in performing an update step on a node.
+
+The aim is to run an Ising model simulation on a random bipartite graph structure. This is different to the regular Ising model simulation described above because of the randomness of the connection structure. In the `normal' version every subgrid (MPI process) only needs to be sent the values from the nearest edges of its neighbouring subgrids. This is due to the regularity of the grid structure.
+
+This is not the case for a random graph. Nodes are neighboured with other nodes that are not `near' them and this neighbouring follows no pattern. This makes data division (how the graph is split between MPI processes) trickier and will also have a significant on the number of MPI sends and receives that will need to be performed. It will also mean that, most likely, more data will have to be sent in each MPI send than is need to be sent in the regular lattice configuration.
 
 %%%%% MOTIVATION %%%%%
 
 \subsection{Motivation}
 
+The aim of this project is to solve ising model simulations on random, bipartite, trivalent graphs. The phase structure of such graphs will be examined, as will the software architecture and performance of MPI communications over a random graph structure.
+
 %%%%% MPI %%%%%
 
-\subsubsection{Why this is an interesting MPI problem}
+\subsubsection{Why This Is An Interesting MPI Problem?}
+
+This is an interesting problem from an MPI point of view because of the randomness of the graph. This makes the simulations much more communication heavy since it is more than likely that every MPI process will need to communicate with every other other MPI process between update steps. There is no pattern to how nodes are connected to each other and therefore the 
 
 %%%%% PHYSICS %%%%%
 
 \subsubsection{Physical uses of these simulations}
 
+This problem is of interest in the field of physics as not much research has been done on the topic of spin models on random bipartite graphs. Spin models on regular lattice structures have been studied in detail for some time now, but there is very little on random graphs. It is interesting from a physics point of view to see the phase structures of such graphs.
 
 %%%%% AIMS %%%%%
 \subsection{Aims}
+
+Since the begining of the porject the primary aim was to write a program that runs an Ising model simulation for a random, bipartite, trivalent graph, and to use this program to examine how the speed-up scales with an increase of core count and to examine the phase structure of such a graph.
+
+The secondary aims of the project were:
+\begin{enumerate}
+\item To construct a `double ring' graph and run an ising model simulation on its topology. To examine the phase transition of this graph.
+\item To determine the most efficient way to generate a random, bipartite, trivalent graph in both serial and parallel. To examine how such a method scales on multiple MPI cores. To explore how many steps it takes to make a graph is sufficiently random, and what the criteria should be for a graph to be considered random.
+\item To generate random bipartite graphs that aren't trivalent (have more than three edges per node, or have a varying number of edges per node) and to run them on the simulation and examine the phase transition.
+\item To find the most efficient method of organising random data to be sent between MPI processes.
+\end{enumerate}
 
 \newpage
 
@@ -334,7 +471,9 @@ Over the course of this project numerous different methods were implemented and 
 %%%%% RANDOM GRAPHS IN SERIAL %%%%%
 \subsubsection{Generating random graphs in serial}
 
-There were two methods employed to generate random graphs over the course of this project. The first method (which we will call \emph{simple generation}) was not used as often as it could not be generalised as easily to parallel code and is only applicable for generating bipartite, trivalent graphs. The second method is the swap algorithm which is discussed in detail in the following subsection.
+There were two methods employed to generate random graphs over the course of this project. The first method (which we will call \emph{simple generation}) was mainl used in testing as it was not guaranteed to generated a connected graph once the number of nodes was increased over 40 (approximately). It also could not be generalised as easily to parallel code and is only applicable for generating bipartite, trivalent graphs. The second, and main, method is the swap algorithm which is discussed in detail in the following subsection.
+
+For completeness the simple generation method is included here.
 
 The simple generation method works by building the set of neighbours of one of the bipartite sets and then using that to reverse engineer the other. The first set, set $A$, is generated using the simple rules:
 
@@ -353,7 +492,7 @@ This method is works quite well in serial, as it starts at node $0$ and fills in
 %%%%% SWAP ALG PIC %%%%%
 \begin{figure}
 \begin{center}
-\begin{tikzpicture}[scale=1.5]
+\begin{tikzpicture}[scale=2]
 
 \draw [fill=black,very thick] (-2.5,-1) circle (0.15cm);
 \node at (-2.5, -1.5) {$a_1$};
@@ -378,6 +517,9 @@ This method is works quite well in serial, as it starts at node $0$ and fills in
 \node at (1.5, -1.5) {$a_0$};
 \draw [fill=black,very thick] (0.5,-1) circle (0.15cm);
 \node at (0.5, -1.5) {$a_1$};
+
+\node at (-1.5, 2) {Before};
+\node at (1.5, 2) {After};
 
 \filldraw ([xshift=-4pt,yshift=-4pt] 2,1) rectangle ++(8pt,8pt);
 \node at (2, 1.5) {$b_2$};
@@ -568,9 +710,9 @@ typedef struct
 Field;
 \end{lstlisting}
 
-The \verb|*halo_count| array is the same size of the number of processors that the code is running on. It is a counter that measures how many data points will be sent from each other process to the host process. For example \verb|if(host.rank == 0) f_a->halo_count[2] = 7| means that if the host process is rank 0, then it expects to be sent 7 data points from process 2.
+The \verb|*halo_count| array is the same size of the number of processors that the code is running on. It is a counter that measures how many data points will be sent from each other process to the host process. For example \verb|if(host.rank==0) f_a->halo_count[2] = 7| means that if the host process is rank 0, then it expects to be sent 7 data points from process 2.
 
-Finally, the two dimensional array \verb|**halo| is the array that actually holds the values that are sent to the host process from the other processors. The first index of this array denotes the process from which the data is to be received from. The second index is the counter for the recieved data. Continuing with the example from the last paragraph, if we have \verb|if(host.rank == 0) f_a->halo_count[2] = 7| then \verb|if(host.rank == 0) f_a->halo[2][j]| has 7 elements, where $j$ determines which value is which, when the data is received.
+Finally, the two dimensional array \verb|**halo| is the array that actually holds the values that are sent to the host process from the other processors. The first index of this array denotes the process from which the data is to be received from. The second index is the counter for the recieved data. Continuing with the example from the last paragraph, if we have \verb|if(host.rank==0) f_a->halo_count[2] = 7| then \verb|if(host.rank==0) f_a->halo[2][j]| has 7 elements, where $j$ determines which value is which, when the data is received.
 
 The number of data points that need to be sent from each processor to every other processor is then computed (more on this method later). The next step is to malloc space for the points needed from other procs to be stored locally on the host proc.
 
@@ -821,7 +963,7 @@ for(i=0;i<a->x_local;i++){
 		}
 \end{lstlisting} 
 
-There is a slight problem with loading the values in to the buffer: the values will be loaded in a random order that is determined by to the order in which the neighbours appear on the array of neighbours. When it is then unpacked by a different processor this order remains. However running the same loop on the receiving process may (actaully, most certainly will for large random graphs) require the data to read out in a different order than it was fed in. For this reason a simple `first-in-first-out' method will not work. The most basic solution would be to send both the global index of a point with its spin value. However this doubles the already large amount of data that has to be sent. Instead it is more efficient to encode the index of the node \emp{and} its spin value into one \verb|int|.
+There is a slight problem with loading the values in to the buffer: the values will be loaded in a random order that is determined by to the order in which the neighbours appear on the array of neighbours. When it is then unpacked by a different processor this order remains. However running the same loop on the receiving process may (actaully, most certainly will for large random graphs) require the data to read out in a different order than it was fed in. For this reason a simple `first-in-first-out' method will not work. The most basic solution would be to send both the global index of a point with its spin value. However this doubles the already large amount of data that has to be sent. Instead it is more efficient to encode the index of the node \emph{and} its spin value into one \verb|int|.
 
 This is done by simply doubling the value of the local index and adding 1 if it is spin up and not adding anything if it is spin down. This way when the data is received this small algorithm is simply reversed to give the spin and the node from where the data originated.
 
@@ -843,26 +985,22 @@ The data is sent and received using the non-blocking MPI calls \verb|MPI_Isend| 
 At this stage the data has been sucessfully sent to the receiving processes and is ready to be unpacked into the the halo array that was created earlier. This simply involves the copying of the data into the halo:
 
 \begin{lstlisting}
-	for(i=0;i<host.np;i++){
-		for(j=0;j<c->recv_count[i];j++){
-			f_a->halo[i][j] = c->buffer_recv[i][j];
-		}
-	}
-}
+for(i=0;i<host.np;i++)
+	for(j=0;j<c->recv_count[i];j++)
+		f_a->halo[i][j] = c->buffer_recv[i][j];
 \end{lstlisting}
 
 The reversing of the encoding used to send the data is done later when the  data is actually needed for the update. The reason for not doing the decoding now is that then both the node and the spin need to be stored seperately in such a way that would allow easy access. However this is actually a hard procedure to implement and would save very little time in the computation. The algorithm for decoding the data is:
 
 \begin{lstlisting}
-for(i=0;i<size;i++){
+for(i=0;i<a->x_local;i++){
 	for(j=0;j<3;j++){
 		// determine if neighbour is local or on another proc
-		if(a->neighbour[i][j] < host.rank*size || a->neighbour[i][j] >= (host.rank+1)*size){
-			// set spin1 to halo
-			k=0; // set index to zero		
-			proc = a->neighbour[i][j]/size; // first index determines the rank of proc
+		if(a->neighbour[i][j] < host.rank*a->x_local || a->neighbour[i][j] >= (host.rank+1)*a->x_local){
+			k=0; 	
+			proc = a->neighbour[i][j]/a->x_local; // rank of proc
 			while(f_b->halo[proc][k]/2 != a->neighbour[i][j]%a->x_local){
-				k++;
+				k++; // increment index until right point is found
 			}
 			val = f_b->halo[proc][k]%2;
 			if( val == 0){
@@ -871,64 +1009,18 @@ for(i=0;i<size;i++){
 				spin[j] = 1;
 			}
 		} else { 
-			spin[j] = f_b->value[a->neighbour[i][j]%size];
+			spin[j] = f_b->value[a->neighbour[i][j]%a->x_local];
 		}
 	}
 }
 \end{lstlisting}
 
+The processor a point belongs to is calculated by dividing the point's global index by the number of points per process, \verb|a->x_local|. The local index is given by the global index modulo the number of points per process. 
+
 %%%%% PROBLEMS ENCOUNTERED IN IMPLEMENTATION %%%%%
 
 
-%%%%%%%%%%% DOUBLE RING PICTURE %%%%%%%%%%
 
-\begin{figure}
-\begin{center}
-\begin{tikzpicture}[scale=1.5]
-
-\draw [fill=black,very thick] (-2.5,1) circle (0.15cm);
-\draw [fill=black,very thick] (-1.5,-1) circle (0.15cm);
-\draw [fill=black,very thick] (-0.5,1) circle (0.15cm);
-\draw [fill=black,very thick] (0.5,-1) circle (0.15cm);
-\draw [fill=black,very thick] (1.5,1) circle (0.15cm);
-\draw [fill=black,very thick] (2.5,-1) circle (0.15cm);
-
-
-\filldraw ([xshift=-4pt,yshift=-4pt] -2.5,-1) rectangle ++(8pt,8pt);
-\filldraw ([xshift=-4pt,yshift=-4pt] -1.5,1) rectangle ++(8pt,8pt);
-\filldraw ([xshift=-4pt,yshift=-4pt] -0.5,-1) rectangle ++(8pt,8pt);
-\filldraw ([xshift=-4pt,yshift=-4pt] 0.5,1) rectangle ++(8pt,8pt);
-\filldraw ([xshift=-4pt,yshift=-4pt] 1.5,-1) rectangle ++(8pt,8pt);
-\filldraw ([xshift=-4pt,yshift=-4pt] 2.5,1) rectangle ++(8pt,8pt);
-
-\draw [very thick] (-3,1) -- (3,1);
-\draw [very thick] (-3,-1) -- (3,-1);
-
-\draw [very thick] (-2.5,1) -- (-2.5,-1);
-\draw [very thick] (-2.5,1) -- (-1.5,1);
-
-\draw [very thick] (-1.5,1) -- (-1.5,-1);
-\draw [very thick] (-1.5,1) -- (-1.5,-1);
-
-\draw [very thick] (-0.5,1) -- (-0.5,-1);
-\draw [very thick] (-0.5,1) -- (-0.5,-1);
-
-\draw [very thick] (0.5,1) -- (0.5,-1);
-\draw [very thick] (0.5,1) -- (0.5,-1);
-
-\draw [very thick] (1.5,1) -- (1.5,-1);
-\draw [very thick] (1.5,1) -- (1.5,-1);
-
-\draw [very thick] (2.5,1) -- (2.5,-1);
-\draw [very thick] (2.5,1) -- (2.5,-1);
-
-
-\end{tikzpicture}
-\caption{Double ring bipartite graph.}
-\end{center}
-\end{figure}
-
-%%%%%%%%% END OF PIC %%%%%%%%%%%%%%
 
 
 
@@ -937,19 +1029,106 @@ for(i=0;i<size;i++){
 %%%%% RESULTS %%%%%
 %%%%%%%%%%%%%%%%%%%
 
-\section{Results}
+\section{Results and Analysis}
 
-\subsection{Serial code}
+The results obtained over the course of this project are discussed in this section.
+
+\subsection{Physics Results}
+
+The aim of this project from a physics point of view was to explore whether or not spontaneous magnetisation occurs below a certain temperature for a random bipartite graph. This was done by running the simulation for a number of different values of $\beta$ where $\beta = \frac{1}{k_B T}$. So if there is an increase in $\beta$ it means that there is a decrease in temperature.
 
 \subsubsection{Double Ring Graph}
 
+The results for the double ring graph with 6400 nodes is shown in figure FILL. The simulation was run for $\beta$ varying from 0.05 to 3 in increments of 0.05. 50,000 update steps were performed at each value of $\beta$. The simulation That this graph came from was one that was run on 4 MPI processes. This simulation was also ran many other times on with many other values of the following parameters: number of processes, $\beta$ range, size of $\beta$ increments, number of update steps and the number of nodes on the graph. 
+
+\begin{figure}
+\centering
+\includegraphics[scale=0.8]{double_ring_mag.jpg}
+\caption{Double ring magnetisation}
+\end{figure}
+
 \subsubsection{Random Bipartite Trivalent graph}
 
-\subsection{Swap Algorithm}
+\begin{figure}
+\centering
+\includegraphics[scale=0.8]{rand_mag.jpg}
+\caption{Random graph magnetisation}
+\end{figure}
+
+\subsubsection{Serial}
+
+
+
+%%%%% CODE PERFORMANCE RESULTS %%%%%
+
+\subsection{Code Performance Results}
+
+One of the central aims of this project was to determine how well the code performed. Timing data was collected for the solver on both random, bipartite, trivalent graphs and the double ring graph. These will be compared against each other and also compared against the scaling of similar code that solves the regular Ising model on the lattice.
+
+In addition to this scaling data, the speed up of the parallel swapping algorithm will also be investigated
+
+%%%%% SPEED UP RESULTS %%%%%%
+
+\subsubsection{Speed Up Results}
+
+The speed up of the solver was measured for both the double ring graph and the random graph. The speed up of the parallel swapping algorithm was also investigated. All are discussed in more detail in the subsections below.
+
+\paragraph{Double Ring Graph} ~\\
+
+To generate this speed up data for the double ring graph the simulation was run with 128,000 nodes for 50,000 update steps. The simulation was run on the Lonsdale cluster on 1, 2, 4, 8, 16, 32 and 64 MPI processes.
+
+From the graph it is clear that the scaling is very good up until 32 processes (approximately linear scaling up to 16 cores). At 32 processes the speed up is 8.325 faster than the serial, and on 64 cores it drops further to 3.622 times faster than the serial version.
+
+%%%%% SPEED UP PIC %%%%%
+\begin{figure}
+\centering
+\includegraphics[scale=0.8]{d_r_speed.jpg}
+\caption{Double ring speed up for a graph with 128,000 nodes and 50,000 update steps.}
+\end{figure}
+%%%%% END OF PIC %%%%%
+
+
+\paragraph{Random Graph} ~\\
+
+The speed up results for the random graph simulation can be seen in figure FILL. The graph used in the simulation had 32,768 nodes (16,384 per set). These were initialised in a double ring configuration before randomising the graph by calling the swap algorithm 88,4736 times. 50,000 update steps were performed. The simulation was run on Lonsdale for 1, 2, 4, 8, 16, 32 and 64 MPI processes. 
+
+%%%%% SPEED UP PIC %%%%%
+\begin{figure}
+\centering
+\includegraphics[scale=0.8]{rand_speed.jpg}
+\caption{Random graph speed up}
+\end{figure}
+%%%%% END OF PIC %%%%%
+
+Examining the graph we can see that overall the scaling is quite poor. The code runs nearly ten times slower on two cores than it does on one, and twice as slowly on four cores than the serial version (`speed up' for two cores is 0.121, and 0.490 for four). The code runs better on 8 and 16 cores (speed up of 2.820 and 3.342 respectively). 
+
+\paragraph{Comparison to Ising Model on Regular Lattice} ~\\
+
+The code used for this simulation was written by my supervisor, Professor Mike Peardon, for the Parallel Numerical Algorithms module he taught, and is available on his webpage.
+
+%%%%% SPEED UP PIC %%%%%
+\begin{figure}
+\centering
+\includegraphics[scale=0.8]{ising_graph.jpg}
+\caption{This is the speed up graph of the Ising model on a regular lattice ($1024 \times 1024$).}
+\end{figure}
+%%%%% END OF PIC %%%%%
+
+
+%%%%% SPEED UP COMPARISON PIC %%%%%
+\begin{figure}
+\centering
+\includegraphics[scale=0.8]{comp.jpg}
+\caption{Speed up comparison}
+\end{figure}
+%%%%%% END PIC %%%%%%
+
+
+\subsubsection{Swap Algorithm}
 
 In this section the performance of the swap algorithm is analysed. The serial version of the algorithm will be compared to the parallel algorithm for a varying number of cores. The number of swaps required to make a graph random will also be studied.
 
-\subsubsection{How Many Swaps makes a Random Graph?}
+
 
 Before a graph is randomised for a simulation it is first initialised in an order that is fast and easy to compute. This is normally just the double ring cofiguration, where ever node has neighbours of the node with the same index, one ahead and one behind in the other bipartite set. From this initialisation we have to randomise the graph using the swap algorithm.
 
@@ -964,7 +1143,6 @@ Now, it is expected at this stage that the graph is random, therefore each of th
 Code was written to simulate the exact situation described above and to determine how many swaps it takes to reach a random graph with no trace of its initial configuration.
 
 \begin{figure}
-
 \centering
 \includegraphics[scale=0.8]{swap_random_1024_by_2_nodegraph.jpg}
 \caption{This plot shows how the number of connections to different processors changes with the number of swaps performed. The graph used was a bipartite, trivalent graph with 1024 nodes in each set (2048 nodes in total). It was run on both 2 (green line) and 4 (red line) processors.}
@@ -979,9 +1157,25 @@ While the last simulation is useful for generating random graphs, it is also int
 \caption{This plot shows how the average number of connections to another processor changes with the number of swaps performed per node. The graph used was a bipartite, trivalent graph with four different graph sizes (1024, 2048, 4096 and 8192). All were run on 4 processors.}
 \end{figure}
 
-\subsubsection{Serial Vs. Parallel}
 
-\subsection{Speedup}
+
+\begin{figure}
+\centering
+\includegraphics[scale=0.8]{swap_speed.jpg}
+\caption{Speed up of the swap algorithm.}
+\end{figure}
+
+
+
+%%%%% DOUBLE RING SPEED UP %%%%%
+
+\subsubsection{Double Ring Graph}
+
+
+\subsubsection{Random Graph}
+
+
+\subsubsection{Swap Algorithm}
 
 \subsection{How}
 
@@ -1000,4 +1194,19 @@ hello
 %%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Future Work}
+
+There are a few things that I would like to have looked into during the course of this project but was not able to due to time constraints (a bug in my code had me stuck for weeks and I was not able to continue until it was fixed). Some areas that I think would be interesting in looking into are:
+\begin{enumerate}
+\item Running simulations on different types of graphs. It would be interesting to see the phase structure of graphs with more edges on each node or where not all nodes have the same number of edges connected to them. There is a small bit of tweaking that would have to be made to the structure of my code but it should be able to run such a simulation.
+\item Using the swap algorithm as a proposal step in the update function. Perhaps instead of proposing a spin flip, a random swap of edges on the graph could be made. This would require a lot more thought than the previous point on how to implement sensibly, because if this is proposed the effects are much more wide reaching than one spin flip. It would be a difficult problem that probably requires a lot of thought but it would be interesting to see the result, if any.
+\end{enumerate}
+
+\newpage
+\section{References}
+
+\begin{enumerate}
+\item Graph theory book by person
+\item
+\end{enumerate}
+
 \end{document}
