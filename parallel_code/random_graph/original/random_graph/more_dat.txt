@@ -1,0 +1,14 @@
+#beta:	avg magnetisation:
+0.100000	0.012781
+0.200000	0.014470
+0.300000	0.016592
+0.400000	0.022867
+0.500000	0.034870
+0.600000	0.666285
+0.700000	0.900946
+0.800000	0.960701
+0.900000	0.982385
+1.000000	0.991737
+1.100000	0.995907
+[mpiexec@peach] Sending Ctrl-C to processes as requested
+[mpiexec@peach] Press Ctrl-C again to force abort

@@ -22,8 +22,8 @@ int main(int argc, char * argv[]){
 	num_nodes=4096;
 	beta=0.001;
 	num_updates=1000;
-//	num_swaps=27*2*num_nodes;
-	num_swaps=0;
+	num_swaps=27*2*num_nodes;
+//	num_swaps=0;
 
 	MPI_Init(&argc,&argv);
 
